@@ -14,12 +14,15 @@ import (
 	"go.uber.org/fx"
 )
 
-func NewHTTP(lc fx.Lifecycle, shutdown fx.Shutdowner, cfg config.Config, logger *slog.Logger, clients *gateway.Clients) (*khttp.Server, error) {
+func NewHTTP(lc fx.Lifecycle, shutdown fx.Shutdowner, cfg config.Config, logger *slog.Logger, clients *gateway.Clients, dashboard *gateway.Dashboard) (*khttp.Server, error) {
 	mux := runtime.NewServeMux()
 	if err := pb.RegisterCatalogServiceHandlerClient(context.Background(), mux, clients.Catalog); err != nil {
 		return nil, err
 	}
 	if err := pb.RegisterReadingServiceHandlerClient(context.Background(), mux, clients.Reading); err != nil {
+		return nil, err
+	}
+	if err := dashboard.Register(mux); err != nil {
 		return nil, err
 	}
 	srv := khttp.NewServer(khttp.Address(cfg.HTTPAddr), khttp.Timeout(cfg.RequestTimeout), khttp.Filter(func(next http.Handler) http.Handler {

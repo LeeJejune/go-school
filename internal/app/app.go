@@ -56,7 +56,7 @@ func Reading() fx.Option {
 
 func Gateway() fx.Option {
 	return fx.Options(common("gateway"), fx.Module("gateway",
-		fx.Provide(gateway.NewClients, server.NewHTTP),
+		fx.Provide(gateway.NewClients, gateway.NewDashboard, server.NewHTTP),
 		fx.Invoke(func(*khttp.Server) {}),
 	))
 }
