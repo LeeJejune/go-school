@@ -1,4 +1,7 @@
-CREATE TABLE reading_lists (
+-- +goose NO TRANSACTION
+-- +goose Up
+-- IF NOT EXISTS also baselines databases created by the original learning example.
+CREATE TABLE IF NOT EXISTS reading_lists (
     id CHAR(32) CHARACTER SET ascii COLLATE ascii_bin PRIMARY KEY,
     request_key VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     fingerprint CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
@@ -7,7 +10,7 @@ CREATE TABLE reading_lists (
     UNIQUE KEY uk_reading_lists_request (request_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE reading_items (
+CREATE TABLE IF NOT EXISTS reading_items (
     list_id CHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     resource_id VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     title VARCHAR(255) NOT NULL,

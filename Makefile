@@ -6,9 +6,9 @@ export GOTOOLCHAIN := local
 export BUF_CACHE_DIR := $(ROOT)/.cache/buf
 export PATH := $(ROOT)/.tools/bin:$(PATH)
 
-.PHONY: help deps tools generate fmt build test check test-db basics concurrency up down db
+.PHONY: help deps tools generate fmt build test check test-db basics concurrency up down db migrate migration-status
 help:
-	@echo 'deps tools generate fmt build test check test-db basics concurrency up down db'
+	@echo 'deps tools generate fmt build test check test-db basics concurrency up down db migrate migration-status'
 deps:
 	go mod download
 tools:
@@ -41,3 +41,7 @@ down:
 	docker compose down
 db:
 	docker compose up -d --wait mysql
+migrate:
+	go run ./cmd/migrate up
+migration-status:
+	go run ./cmd/migrate status
