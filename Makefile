@@ -20,7 +20,7 @@ generate:
 	$(ROOT)/.tools/bin/buf lint
 	$(ROOT)/.tools/bin/buf generate
 fmt:
-	gofmt -w cmd internal examples
+	gofmt -w cmd internal examples migrations
 build:
 	mkdir -p bin
 	go build -o bin/ ./cmd/...
@@ -30,7 +30,7 @@ check:
 	go vet ./...
 	go test -race ./...
 test-db:
-	MYSQL_TEST_DSN='school:school@tcp(127.0.0.1:3307)/school?parseTime=true&loc=UTC' go test -race -count=1 -v ./internal/mysqlstore
+	MYSQL_TEST_DSN='school:school@tcp(127.0.0.1:3307)/school?parseTime=true&loc=UTC' go test -race -count=1 -v ./internal/data ./internal/app
 basics:
 	go run ./examples/01-basics
 concurrency:

@@ -7,8 +7,11 @@ import (
 )
 
 var (
-	ErrNotFound = errors.New("reading list or item not found")
-	ErrConflict = errors.New("request key already belongs to a different payload")
+	ErrNotFound           = errors.New("reading list or item not found")
+	ErrConflict           = errors.New("request key already belongs to a different payload")
+	ErrInvalidInput       = errors.New("invalid input")
+	ErrCatalogUnavailable = errors.New("catalog is unavailable; retry with the same request_key")
+	ErrResourceNotFound   = errors.New("resource not found")
 )
 
 type Resource struct {
@@ -31,9 +34,14 @@ type CreateParams struct {
 	Resources                      []Resource
 }
 
-// Store lives with its consumer. It describes the three operations this service
+type CreateInput struct {
+	RequestKey, Title string
+	ResourceIDs       []string
+}
+
+// Repository lives with its consumer. It describes the three operations this service
 // needs; it is not a generic repository for every table.
-type Store interface {
+type Repository interface {
 	Create(context.Context, CreateParams) (List, error)
 	Get(context.Context, string) (List, error)
 	SetRead(context.Context, string, string, bool) error

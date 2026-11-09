@@ -1,16 +1,8 @@
 package main
 
 import (
-	pb "github.com/LeeJejune/go-school/gen/school/v1"
-	"github.com/LeeJejune/go-school/internal/catalog"
-	"github.com/LeeJejune/go-school/internal/platform"
-	"google.golang.org/grpc"
+	"github.com/LeeJejune/go-school/internal/app"
+	"go.uber.org/fx"
 )
 
-func main() {
-	ctx, stop := platform.SignalContext()
-	defer stop()
-	platform.LogFatal(platform.ServeGRPC(ctx, platform.Env("CATALOG_ADDR", "127.0.0.1:9001"), func(server *grpc.Server) {
-		pb.RegisterCatalogServiceServer(server, catalog.New())
-	}))
-}
+func main() { fx.New(app.Catalog()).Run() }

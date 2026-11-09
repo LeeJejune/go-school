@@ -1,4 +1,4 @@
-package mysqlstore
+package data
 
 import (
 	"context"
@@ -11,6 +11,9 @@ import (
 	"time"
 
 	"github.com/LeeJejune/go-school/internal/reading"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // Run only against the dedicated local learning database after applying 001_init.
@@ -30,7 +33,11 @@ func TestMySQLTransactionReplayAndReadState(t *testing.T) {
 	if err = db.PingContext(ctx); err != nil {
 		t.Fatal(err)
 	}
-	store := New(db)
+	orm, err := gorm.Open(mysql.New(mysql.Config{Conn: db, SkipInitializeWithVersion: true}), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	store := NewReadingRepository(orm)
 	key := fmt.Sprintf("test-%d", time.Now().UnixNano())
 	t.Cleanup(func() {
 		cleanup, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -78,6 +85,23 @@ func TestMySQLTransactionReplayAndReadState(t *testing.T) {
 	list, err := store.Get(ctx, id)
 	if err != nil || !list.Items[0].IsRead {
 		t.Fatalf("list=%+v err=%v", list, err)
+	}
+	for range 2 {
+		if err := store.SetRead(ctx, id, "go-tour", false); err != nil {
+			t.Fatal(err)
+		}
+	}
+	list, err = store.Get(ctx, id)
+	if err != nil || list.Items[0].IsRead || list.CreatedAt.IsZero() {
+		t.Fatalf("false update or timestamp: list=%+v err=%v", list, err)
+	}
+	if err := store.SetRead(ctx, id, "missing", true); !errors.Is(err, reading.ErrNotFound) {
+		t.Fatalf("missing item=%v", err)
+	}
+	canceled, stop := context.WithCancel(ctx)
+	stop()
+	if _, err := store.Get(canceled, id); !errors.Is(err, context.Canceled) {
+		t.Fatalf("cancellation=%v", err)
 	}
 	bad := params
 	bad.RequestKey = key + "-bad"
