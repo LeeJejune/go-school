@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package school.v1;
+
+option go_package = "github.com/LeeJejune/go-school/go-practice/gen/school/v1;schoolv1";
+
+// The catalog is read-only. Reading lists store a title snapshot, not a foreign
+// key to another service's database.
+service CatalogService {
+  rpc ListResources(ListResourcesRequest) returns (ListResourcesResponse);
+  rpc BatchGetResources(BatchGetResourcesRequest) returns (BatchGetResourcesResponse);
+}
+
+service ReadingService {
+  rpc CreateList(CreateListRequest) returns (CreateListResponse);
+  rpc GetList(GetListRequest) returns (GetListResponse);
+  rpc SetRead(SetReadRequest) returns (SetReadResponse);
+}
+
+message Resource {
+  string id = 1;
+  string title = 2;
+  string url = 3;
+}
+message ListResourcesRequest {}
+message ListResourcesResponse { repeated Resource resources = 1; }
+message BatchGetResourcesRequest { repeated string ids = 1; }
+message BatchGetResourcesResponse { repeated Resource resources = 1; }
+message ReadingItem {
+  Resource resource = 1;
+  bool is_read = 2;
+}
+message ReadingList {
+  string id = 1;
+  string title = 2;
+  repeated ReadingItem items = 3;
+  string created_at = 4;
+}
+message CreateListRequest {
+  string request_key = 1;
+  string title = 2;
+  repeated string resource_ids = 3;
+}
+message CreateListResponse { ReadingList reading_list = 1; }
+message GetListRequest { string id = 1; }
+message GetListResponse { ReadingList reading_list = 1; }
+message SetReadRequest {
+  string list_id = 1;
+  string resource_id = 2;
+  bool is_read = 3;
+}
+message SetReadResponse {}

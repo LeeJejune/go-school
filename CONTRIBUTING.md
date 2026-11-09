@@ -42,6 +42,7 @@ type(scope): 한국어 변경 요약
 | --- | --- |
 | catalog, reading, gateway | 해당 애플리케이션이나 기능 |
 | backend | 여러 서버에 걸친 공통 실행 구조 |
+| basic, practice, workspace | 기초 실습, 서버 실습, 다중 모듈 구성 |
 | db, data | 마이그레이션과 데이터 접근 |
 | config | 환경 설정 |
 | deps | go.mod, go.sum과 외부 의존성 |
@@ -73,7 +74,7 @@ build(deps): 백엔드 프레임워크 의존성 추가
 ## 커밋 전 확인
 
 - `git diff --cached`로 실제 포함할 변경만 검토한다.
-- 코드 변경에는 `make check`를 실행한다. DB와 전체 API 경로가 바뀌면 준비된 로컬 DB에서 `make test-db`도 실행한다.
+- 코드 변경에는 루트의 `make check`로 두 프로젝트를 검사한다. DB와 전체 API 경로가 바뀌면 준비된 로컬 DB에서 `make -C go-practice test-db`도 실행한다.
 - 문서 변경은 내부 링크와 실제 명령·경로를 확인한다.
 - 검증하지 못한 항목은 통과했다고 적지 않고 본문이나 검증 문서에 범위를 남긴다.
 - `.env`, 비밀 값, 캐시, 실행 로그, 빌드 산출물은 포함하지 않는다.

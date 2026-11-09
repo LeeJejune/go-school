@@ -1,0 +1,62 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Catalog",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/cmd/catalog",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "GOWORK": "off"
+      }
+    },
+    {
+      "name": "Reading (DB migration 필요)",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/cmd/reading",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "GOWORK": "off"
+      }
+    },
+    {
+      "name": "Migrate",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/cmd/migrate",
+      "args": [
+        "up"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "GOWORK": "off"
+      }
+    },
+    {
+      "name": "Gateway",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/cmd/gateway",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "GOWORK": "off"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "All servers (DB migration 필요)",
+      "configurations": [
+        "Catalog",
+        "Reading (DB migration 필요)",
+        "Gateway"
+      ]
+    }
+  ]
+}

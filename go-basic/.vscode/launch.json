@@ -1,0 +1,7 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {"name":"Basics","type":"go","request":"launch","mode":"auto","program":"${workspaceFolder}/examples/01-basics","cwd":"${workspaceFolder}","env":{"GOWORK":"off"}},
+    {"name":"Concurrency","type":"go","request":"launch","mode":"auto","program":"${workspaceFolder}/examples/02-concurrency","cwd":"${workspaceFolder}","env":{"GOWORK":"off"}}
+  ]
+}
