@@ -1,71 +1,148 @@
-# 01. Go 기본 문법
+# 01. Java의 main 메서드에서 Go의 main 함수로
 
-## 패키지, 모듈, 실행 파일
+이 장의 목표는 **Go 프로그램을 실행하고, 변수와 함수가 적힌 코드를 읽는 것**입니다. Spring 설정이나 서버는 아직 다루지 않습니다.
 
-모듈은 `go.mod`로 버전과 의존성을 관리하는 단위다. 패키지는 같은 디렉터리의 Go 파일들을 묶는 단위다. 서로 import할 수 있지만 순환 import는 허용되지 않는다. 실행 파일은 `package main`의 `func main()`에서 시작한다. go-basic은 독립 모듈 하나에 문법과 동시성 예제를 둔다. 외부 라이브러리는 사용하지 않는다.
+## 1. 먼저 기존 예제를 실행하세요
 
-각 examples 하위 디렉터리는 실행 가능한 package main이다. internal/workpool은 동시성 예제가 import하는 패키지다. internal에는 상위 경로를 공유하는 코드만 import할 수 있다는 언어 도구의 제한이 있다.
+아래 명령은 저장소의 go-basic 폴더에서 실행합니다.
 
-## 값과 제로 값
-
-```go
-var count int       // 0
-var enabled bool    // false
-var title string    // ""
-name := "Go"        // 함수 안에서 선언과 추론
+```bash
+make basics
 ```
 
-구조체도 필드의 제로 값으로 만들어진다. 생성자 문법은 없고 필요하면 `New` 함수를 만든다. 제로 값이 곧 유효한 업무 데이터라는 뜻은 아니다. 빈 제목을 거절하는 일은 서비스의 검증이다.
+다음 세 줄이 나오면 준비가 끝났습니다.
 
-Go는 할당과 인자 전달에서 값을 복사한다. struct 전체도 값이다. pointer를 전달하면 주소를 공유한다. `Article`을 값으로 받은 메서드에서 필드를 바꾸면 복사본이 바뀐다. `*Article`을 받으면 원본을 바꿀 수 있다. 큰 객체라는 이유만으로 모든 값을 pointer로 바꾸기보다 변경 의미와 수명을 본다.
-
-## array, slice, map
-
-array는 길이가 타입의 일부인 고정 크기 값이다. slice는 배열 구간을 가리키는 정보이며 길이와 용량을 가진다.
-
-```go
-original := []int{1, 2, 3}
-alias := original[:2]
-alias[0] = 9             // original[0]도 9
-copied := append([]int(nil), original...)
-copied[0] = 7            // original과 별도 배열
+```text
+A Tour of Go (read=true)
+read=1 unread=1
+empty title: true
 ```
 
-slice를 복사해도 내부 배열까지 깊은 복사가 되지는 않는다. `append`가 기존 배열을 쓰는지 새 배열을 만드는지는 capacity에 따라 달라진다. 공유 메모리와 동시성을 다룰 때 중요하다. 함수가 반환한 slice를 외부에서 바꿔도 되는지도 정한다.
+[실행한 파일](../examples/01-basics/main.go)을 열고 맨 아래의 func main을 찾으세요. 지금은 나머지 함수를 모두 이해하지 않아도 됩니다.
 
-map은 키로 값을 찾는 자료구조다. `value, ok := m[key]`로 실제 존재 여부를 구분한다. 없는 키에서 나온 0과 실제 저장한 0은 다르다. nil map의 조회는 가능하지만 쓰기는 panic이다. `make(map[string]int)`로 만든다. map의 반복 순서는 보장되지 않고, 동시 읽기와 쓰기는 보호가 필요하다.
+## 2. Java와 비교할 가장 작은 프로그램
 
-## struct, 메서드, interface
-
-```go
-type Article struct { Title string; Read bool }
-func (a *Article) MarkRead() { a.Read = true }
-```
-
-메서드는 특정 타입에 붙은 함수다. 클래스 상속보다는 작은 타입과 조합으로 기능을 나눈다. interface는 필요한 메서드의 집합이며 명시적 `implements` 없이 만족한다.
-
-기본 예제의 printLabel은 fmt.Stringer 인터페이스를 인자로 받는다. Article에 String() string 메서드가 있으므로 별도의 implements 선언 없이 전달할 수 있다. 필요한 메서드가 있는지로 인터페이스를 만족한다.
-
-interface 값에는 동적 타입과 값이 함께 들어간다. `(*SomeError)(nil)`을 error로 반환하면 interface 자체는 nil이 아닐 수 있다. 성공할 때는 명확히 `return nil`을 쓴다.
-
-## error와 defer
-
-Go의 일반적인 실패 전달은 `(결과, error)`다. 예외가 자동으로 상위 호출자를 건너뛰는 방식이 아니므로 호출자가 실패 처리를 드러낸다.
+Java에서 public static void main으로 시작하던 프로그램을 Go에서는 다음처럼 작성합니다. 아래는 파일 전체를 실행할 수 있는 예시입니다.
 
 ```go
-if err != nil {
-    return fmt.Errorf("create article: %w", err)
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello, Go")
 }
 ```
 
-`%w`는 원래 오류를 감싼다. `errors.Is`는 특정 오류인지, `errors.As`는 특정 오류 타입인지 검사한다. 기본 예제는 errors.Is로 빈 제목 오류인지 확인한다. `panic`은 예상 가능한 잘못된 사용자 입력 처리에 쓰지 않는다.
+```text
+Hello, Go
+```
 
-`defer`는 현재 함수가 반환될 때 실행한다. 파일 닫기나 타이머 정리처럼 빠지는 경로가 생기면 안 되는 정리에 사용한다. 여러 defer는 역순으로 실행된다. 반복문에서 함수가 끝날 때까지 수많은 자원을 붙잡지 않도록 범위를 작게 만든다.
+| 코드 | 지금 알아둘 의미 |
+| --- | --- |
+| package main | 실행할 프로그램이 속한 패키지입니다. |
+| import "fmt" | 문자열 출력 등을 제공하는 표준 패키지를 가져옵니다. |
+| func main() | 프로그램의 시작 함수입니다. 클래스 안에 넣지 않습니다. |
+| fmt.Println(...) | Java의 System.out.println처럼 값을 출력합니다. |
 
-## 확인할 것
+Java 문장 끝에 붙이던 세미콜론은 일반적인 Go 코드에서 생략합니다. if나 함수의 여는 중괄호는 같은 줄에 씁니다.
 
-- slice를 인자로 넘긴 뒤 항목을 바꾸면 왜 호출자도 바뀌는가?
-- Article에 implements 선언이 없는데 fmt.Stringer로 전달할 수 있는 이유는?
-- MarkRead의 수신자를 *Article에서 Article로 바꾸면 원본은 어떻게 되는가?
+이후 문서에서 **package main으로 시작하는 예시**는 독립 실행용 전체 코드입니다. 따라 치려면 go-basic 아래 scratch 폴더를 만들고 scratch/main.go에 예시 하나를 넣은 뒤 실행하세요.
 
-읽기: [Tour of Go](https://go.dev/tour/), [공식 모듈 구조 안내](https://go.dev/doc/modules/layout), [Code Review Comments](https://go.dev/wiki/CodeReviewComments).
+```bash
+go run ./scratch
+```
+
+다음 예시를 실행할 때는 같은 파일의 내용을 교체하세요. package main이 없는 짧은 코드는 설명에 필요한 일부이므로 그것만 붙여 넣어 실행하지 않습니다.
+
+## 3. 변수는 '이름 타입' 순서로 적어요
+
+Java의 String title에 대응하는 모양은 Go의 title string입니다.
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    var title string = "Go 공부"
+    count := 2
+    count = count + 1
+
+    fmt.Println(title)
+    fmt.Println(count)
+}
+```
+
+```text
+Go 공부
+3
+```
+
+- var title string은 타입을 적어 변수를 선언합니다.
+- count := 2는 함수 안에서 변수를 새로 만들고 타입을 추론합니다. 여기서는 int입니다.
+- 이미 있는 변수에 다시 값을 넣을 때는 =를 씁니다.
+
+Java의 var처럼 타입 추론이 있어도 동적 타입 언어가 되는 것은 아닙니다. count에 나중에 문자열을 넣으면 컴파일 오류가 납니다.
+
+초기값을 적지 않은 Go 변수에는 기본값인 **제로 값**이 들어갑니다. int는 0, bool은 false, string은 빈 문자열입니다. Java의 지역 변수와 달리 var count int만 선언해도 0으로 읽을 수 있습니다.
+
+## 4. 함수도 타입이 뒤에 와요
+
+다음은 함수와 조건문, 반복문을 함께 실행하는 전체 예시입니다.
+
+```go
+package main
+
+import "fmt"
+
+func add(a int, b int) int {
+    return a + b
+}
+
+func main() {
+    total := 0
+    for i := 1; i <= 3; i++ {
+        total = add(total, i)
+    }
+
+    if total == 6 {
+        fmt.Println("합계:", total)
+    }
+}
+```
+
+```text
+합계: 6
+```
+
+func add(a int, b int) int를 왼쪽부터 읽으면 '이름은 add, 정수 두 개를 받아 정수 하나를 반환하는 함수'입니다. Java라면 int add(int a, int b)에 가깝습니다.
+
+if의 조건에는 괄호가 필요하지 않습니다. 반복에는 for를 사용합니다. Go에서 while처럼 반복하고 싶을 때도 조건만 적은 for를 씁니다.
+
+## 5. go.mod와 package는 다른 말이에요
+
+[go.mod](../go.mod)는 이 프로젝트의 모듈 이름과 Go 버전을 적는 파일입니다. 의존성을 관리하는 역할은 Java의 build.gradle이나 pom.xml을 떠올리면 됩니다. 같은 디렉터리의 Go 파일들은 보통 같은 package에 속합니다.
+
+이 예제는 다음 두 개의 실행 패키지를 갖습니다.
+
+```text
+examples/01-basics/       기본 문법 프로그램
+examples/02-concurrency/  동시성 프로그램
+```
+
+make basics는 Makefile에 적힌 go run ./examples/01-basics를 대신 실행합니다. Go가 Makefile을 반드시 요구하는 것은 아닙니다.
+
+가져오고 쓰지 않은 import나 사용하지 않은 지역 변수 때문에 컴파일 오류가 날 수 있습니다. 연습 중에는 메시지가 가리키는 줄부터 확인하세요.
+
+## 직접 확인해 보세요
+
+1. 첫 Hello 예시의 문구를 바꿔 실행하세요.
+2. add가 계산한 합계가 10이 되게 반복 범위를 바꿔 보세요.
+3. count := 2 다음 줄을 count = "둘"로 바꾸면 어떤 오류가 나는지 확인하세요.
+
+다음 장으로 넘어가기 전, func main과 :=, =의 역할을 설명할 수 있으면 충분합니다.
+
+[다음: 배열·slice·map](02-collections.md) · [학습 순서](../README.md)
+
+더 읽기: [A Tour of Go의 패키지와 함수](https://go.dev/tour/basics/1).
