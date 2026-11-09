@@ -1,0 +1,53 @@
+name: go-school
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: school
+      MYSQL_USER: school
+      MYSQL_PASSWORD: school
+      MYSQL_ROOT_PASSWORD: local-root-only
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - school_mysql:/var/lib/mysql
+      - ./migrations/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_PASSWORD mysql -h127.0.0.1 -u$$MYSQL_USER $$MYSQL_DATABASE -e 'SELECT 1' > /dev/null 2>&1"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  catalog:
+    build: .
+    command: ["/app/catalog"]
+    environment:
+      CATALOG_ADDR: 0.0.0.0:9001
+    ports:
+      - "127.0.0.1:9001:9001"
+  reading:
+    build: .
+    command: ["/app/reading"]
+    environment:
+      READING_ADDR: 0.0.0.0:9002
+      CATALOG_TARGET: catalog:9001
+      MYSQL_DSN: school:school@tcp(mysql:3306)/school?parseTime=true&loc=UTC&timeout=3s&readTimeout=3s&writeTimeout=3s
+    depends_on:
+      mysql:
+        condition: service_healthy
+      catalog:
+        condition: service_started
+    ports:
+      - "127.0.0.1:9002:9002"
+  gateway:
+    build: .
+    command: ["/app/gateway"]
+    environment:
+      HTTP_ADDR: 0.0.0.0:8080
+      CATALOG_TARGET: catalog:9001
+      READING_TARGET: reading:9002
+    depends_on:
+      - reading
+    ports:
+      - "127.0.0.1:8080:8080"
+volumes:
+  school_mysql:

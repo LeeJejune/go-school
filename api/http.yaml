@@ -1,0 +1,14 @@
+type: google.api.Service
+config_version: 3
+http:
+  rules:
+    - selector: school.v1.CatalogService.ListResources
+      get: /v1/resources
+    - selector: school.v1.ReadingService.CreateList
+      post: /v1/lists
+      body: "*"
+    - selector: school.v1.ReadingService.GetList
+      get: /v1/lists/{id}
+    - selector: school.v1.ReadingService.SetRead
+      patch: /v1/lists/{list_id}/items/{resource_id}
+      body: "*"
