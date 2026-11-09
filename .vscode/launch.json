@@ -2,8 +2,9 @@
   "version": "0.2.0",
   "configurations": [
     {"name":"Catalog","type":"go","request":"launch","mode":"auto","program":"${workspaceFolder}/cmd/catalog"},
-    {"name":"Reading (MySQL 필요)","type":"go","request":"launch","mode":"auto","program":"${workspaceFolder}/cmd/reading"},
+    {"name":"Reading (DB migration 필요)","type":"go","request":"launch","mode":"auto","program":"${workspaceFolder}/cmd/reading"},
+    {"name":"Migrate","type":"go","request":"launch","mode":"auto","program":"${workspaceFolder}/cmd/migrate","args":["up"]},
     {"name":"Gateway","type":"go","request":"launch","mode":"auto","program":"${workspaceFolder}/cmd/gateway"}
   ],
-  "compounds": [{"name":"All servers (MySQL 필요)","configurations":["Catalog","Reading (MySQL 필요)","Gateway"]}]
+  "compounds": [{"name":"All servers (DB migration 필요)","configurations":["Catalog","Reading (DB migration 필요)","Gateway"]}]
 }

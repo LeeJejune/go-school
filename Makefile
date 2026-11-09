@@ -6,11 +6,13 @@ export GOTOOLCHAIN := local
 export BUF_CACHE_DIR := $(ROOT)/.cache/buf
 export PATH := $(ROOT)/.tools/bin:$(PATH)
 
-.PHONY: help deps tools generate fmt build test check test-db basics concurrency up down db migrate migration-status
+.PHONY: help deps tidy tools generate fmt build test check test-db basics concurrency up down db migrate migration-status run-catalog run-reading run-gateway
 help:
-	@echo 'deps tools generate fmt build test check test-db basics concurrency up down db migrate migration-status'
+	@echo 'deps tidy tools generate fmt build test check test-db basics concurrency up down db migrate migration-status run-catalog run-reading run-gateway'
 deps:
 	go mod download
+tidy:
+	go mod tidy
 tools:
 	GOBIN=$(ROOT)/.tools/bin go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.12
 	GOBIN=$(ROOT)/.tools/bin go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.6.2
@@ -36,7 +38,7 @@ basics:
 concurrency:
 	go run ./examples/02-concurrency
 up:
-	docker compose up --build -d
+	docker compose up --build -d --wait
 down:
 	docker compose down
 db:
@@ -45,3 +47,9 @@ migrate:
 	go run ./cmd/migrate up
 migration-status:
 	go run ./cmd/migrate status
+run-catalog:
+	go run ./cmd/catalog
+run-reading:
+	go run ./cmd/reading
+run-gateway:
+	go run ./cmd/gateway
