@@ -1,48 +1,51 @@
-# go-school
+# go-school — Java/Spring 개발자의 Go 입문
 
-Go 언어 자체를 익히는 **go-basic**과 실무형 백엔드를 만드는 **go-practice**를 나눈 학습 저장소다.
+Java/Spring으로 백엔드를 만들어 본 사람이 Go를 처음 배운다고 가정한 학습 저장소입니다. **문법을 작은 프로그램으로 익히는 단계**와 **서버 요청을 끝까지 따라가는 단계**를 나눴습니다.
 
-| 프로젝트 | 배우는 내용 | 준비 |
+| 프로젝트 | 처음 하는 일 | 준비 |
 | --- | --- | --- |
-| [go-basic](go-basic/README.md) | 문법, struct/interface/error, goroutine/channel/Context, worker pool | Go 1.26 이상 |
-| [go-practice](go-practice/README.md) | Kratos, Fx DI, GORM, Goose, MySQL, gRPC, Gateway | Go 1.26 이상, Docker |
+| [go-basic](go-basic/README.md) | 실행·변수·함수부터 다섯 단계로 학습 | Go 1.26 이상 |
+| [go-practice](go-practice/README.md) | Spring의 Controller·Service·Repository에 대응하는 코드 찾기 | Go 1.26 이상, Docker |
 
-각 디렉터리에 독립적인 go.mod, README와 Makefile이 있다. go-basic은 표준 라이브러리만 사용하며 서버 프레임워크나 MySQL을 설치하지 않아도 된다. 루트의 go.work는 두 프로젝트를 편집기에서 함께 탐색하기 위한 설정이다. 각 프로젝트의 Makefile은 GOWORK=off로 독립 실행을 검증한다.
+## 처음이라면 여기서 시작하세요
 
-## 기초 실습
+저장소 루트인 go-school에서 실행합니다.
 
 ```bash
-cd go-basic
-make basics
-make concurrency
-make check
+make -C go-basic basics
 ```
 
-어떤 파일부터 읽을지는 [기초 실습 안내](go-basic/README.md)를 본다.
+그다음 [기초 1장](go-basic/docs/01-basics.md)을 읽으세요. 문서에 있는 작은 전체 예제와 예상 출력을 확인하고, 문제 하나씩 바꿔 보는 방식입니다.
 
-## 서버 실습
+기초 1~4장을 읽으면 서버 실습을 시작할 수 있습니다. 동시성 장의 worker pool 내부 구현은 나중에 읽어도 됩니다.
 
-저장소 루트에서 다음 명령을 실행한다.
+## 서버를 실행하고 싶다면
+
+Docker Desktop을 켠 뒤 저장소 루트에서 실행합니다.
 
 ```bash
 make -C go-practice up
 ```
 
-브라우저나 curl로 http://localhost:8080/v1/resources 를 확인한다. 로컬 디버깅, API 사용법, Spring과의 비교는 [서버 실습 안내](go-practice/README.md)에 정리했다.
+http://localhost:8080/v1/resources 에서 JSON 응답을 확인합니다. 목록 생성과 읽음 상태 변경은 [서버 README](go-practice/README.md), 실제 코드를 읽는 시작점은 [Spring 역할 대응 문서](go-practice/docs/01-spring-to-go.md)에 있습니다.
+
+종료할 때는 다음을 실행합니다. DB 볼륨은 유지합니다.
 
 ```bash
 make -C go-practice down
 ```
 
-## 공통 명령
+## 공통 검사
 
 ```bash
-make check    # 두 프로젝트의 vet + race 검사
-make test     # 두 프로젝트의 단위 테스트
+make check
+make test
 make fmt
 ```
 
-DB 통합 테스트는 서버 프로젝트에서 따로 준비하고 실행한다.
+각 프로젝트는 독립적인 go.mod와 Makefile을 갖습니다. 루트의 go.work는 함께 탐색하기 위한 설정이고, 프로젝트별 Makefile은 GOWORK=off로 독립 실행합니다.
+
+실제 DB 테스트는 다음처럼 준비한 뒤 실행합니다.
 
 ```bash
 make -C go-practice db
@@ -50,4 +53,4 @@ make -C go-practice migrate
 make -C go-practice test-db
 ```
 
-VS Code 디버그 설정은 각 프로젝트의 .vscode에 있으므로 원하는 프로젝트 폴더를 열어 사용한다. 변경은 [커밋 규칙](CONTRIBUTING.md)에 따라 기능·설정 단위로 기록한다.
+VS Code 디버그 설정은 각 프로젝트 폴더의 .vscode에 있습니다. 변경은 [커밋 규칙](CONTRIBUTING.md)에 따라 기능·설정 단위로 기록합니다.

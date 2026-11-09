@@ -1,39 +1,59 @@
-# 06. 공식 문서와 읽을거리
+# 06. 막혔을 때 어떤 문서를 읽을까요?
 
-각 단계의 코드를 먼저 훑고 해당 문서를 읽는다. 아키텍처 글은 언어와 DB를 익힌 뒤 읽는 편이 판단하기 쉽다.
+처음부터 공식 문서를 모두 정독할 필요는 없습니다. **저장소의 작은 코드를 읽다가 이해가 막힌 부분만 찾아보는 순서**로 사용하세요.
 
-| 순서 | 자료 | 볼 부분 |
+## 1. 지금 막힌 질문에 맞춰 골라요
+
+| 막힌 질문 | 먼저 볼 자료 | 확인할 부분 |
 | --- | --- | --- |
-| 1 | [A Tour of Go](https://go.dev/tour/) | slice, map, method, interface를 직접 수정 |
-| 2 | [Go Code Review Comments](https://go.dev/wiki/CodeReviewComments) | naming, error, interface, context의 관례 |
-| 3 | [Go Concurrency Patterns: Pipelines and cancellation](https://go.dev/blog/pipelines) | 받는 쪽이 종료했을 때 보내는 goroutine의 수명 |
-| 4 | [Context](https://go.dev/blog/context) / [Context and structs](https://go.dev/blog/context-and-structs) | 요청 범위의 취소와 저장하면 생기는 문제 |
-| 5 | [Accessing relational databases](https://go.dev/doc/database/) | database/sql, Rows, transaction, pool |
-| 6 | [MySQL 드라이버](https://pkg.go.dev/github.com/go-sql-driver/mysql) | DSN, parseTime, timeout, RowsAffected |
-| 7 | [gRPC Go basics](https://grpc.io/docs/languages/go/basics/) | 생성 코드와 실제 RPC 호출 |
-| 8 | [grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway) | HTTP 매핑과 코드 생성 |
-| 9 | [Go 공식 프로젝트 구조](https://go.dev/doc/modules/layout) | internal의 import 제한, 여러 cmd |
-| 10 | [Three Dots Labs: Clean Architecture in Go](https://threedots.tech/post/introducing-clean-architecture/) | 실제 코드에서 의존성을 바꾸는 과정 |
-| 11 | [당근: 계층형과 육각형 아키텍처 적용 사례](https://medium.com/daangn/%EC%95%84%ED%82%A4%ED%85%8D%EC%B2%98%EC%97%90-%EB%8C%80%ED%95%9C-%EA%B3%A0%EB%AF%BC%EC%9D%80-%EC%B2%98%EC%9D%8C%EC%9D%B4%EB%9D%BC-b75dffd73eb0) | 단순한 로직과 외부 의존성이 많아진 로직의 차이 |
-| 12 | [당근: 예측 가능한 대규모 서비스 개발하기](https://medium.com/daangn/%EC%98%88%EC%B8%A1-%EA%B0%80%EB%8A%A5%ED%95%9C-%EB%8C%80%EA%B7%9C%EB%AA%A8-%EC%84%9C%EB%B9%84%EC%8A%A4-%EA%B0%9C%EB%B0%9C%ED%95%98%EA%B8%B0-a33e2f3cef88) | Go 서비스에서 초기 상태와 실패 경로, 측정의 중요성 |
+| :=, *, &, interface가 낯설어요 | [go-basic 학습 순서](../../go-basic/README.md) | 1~4장의 실행 예제 |
+| 브라우저에서 문법을 바꿔 보고 싶어요 | [A Tour of Go](https://go.dev/tour/) | 패키지, 함수, 포인터, 메서드 |
+| gRPC가 다른 서버를 어떻게 호출하나요? | [gRPC 소개](https://grpc.io/docs/what-is-grpc/introduction/) | 서비스 정의와 생성된 클라이언트 |
+| HTTP JSON은 어떻게 연결되나요? | [grpc-gateway 공식 저장소](https://github.com/grpc-ecosystem/grpc-gateway) | 생성된 HTTP 처리 코드 |
+| 서버 옵션과 공통 처리는 어디서 보나요? | [Kratos](https://go-kratos.dev/docs/) | HTTP/gRPC transport와 middleware |
+| Fx가 생성자를 언제 호출하나요? | [Fx 시작 안내](https://uber-go.github.io/fx/get-started/) | Provide, Invoke, Lifecycle |
+| GORM으로 조회·저장하는 법은요? | [GORM](https://gorm.io/docs/) | Query, Update, Transaction, Preload |
+| 스키마 변경 이력을 어떻게 관리하나요? | [Goose 공식 저장소](https://github.com/pressly/goose) | SQL migration과 Provider |
+| Context로 무엇이 취소되나요? | [Context 표준 문서](https://pkg.go.dev/context) | 취소 함수와 Done |
+| 여러 작업의 오류를 함께 다루고 싶어요 | [errgroup](https://pkg.go.dev/golang.org/x/sync/errgroup) | WithContext, Go, Wait |
 
-Go 공식 문서는 API와 도구의 기준이다. 회사 글은 당시 팀의 사례다. 글의 구조를 그대로 복사하기보다 어떤 제약 때문에 해당 선택을 했는지 본다. `golang-standards/project-layout`은 이름과 달리 Go 팀의 공식 표준이 아니다.
+링크에서 새 단어가 더 많이 나오면 이 저장소의 해당 장으로 돌아와 작은 예시를 먼저 실행해도 됩니다.
 
-## IDE
+## 2. 공식 예제를 가져올 때 버전을 확인하세요
 
-**GoLand**: JetBrains 사용 경험을 살리기 좋다. 탐색, 리팩터링, 테스트와 디버깅을 한 환경에서 사용한다. 상용 라이선스 또는 자격이 확인된 학생용 라이선스가 필요하다. [등록 안내](https://www.jetbrains.com/help/go/register.html), [학생 지원](https://www.jetbrains.com/academy/student-pack/)
+이 프로젝트가 사용하는 버전은 [go.mod](../go.mod)에 있습니다. 온라인 문서는 다른 버전의 API를 먼저 보여 줄 수 있으므로 메서드 이름과 import 경로를 함께 확인하세요.
 
-**VS Code**: [공식 Go 확장 설정](https://code.visualstudio.com/docs/languages/go)에 따라 `golang.Go`를 설치한다. gopls가 탐색과 분석을, Delve가 디버깅을 담당한다. `.vscode/launch.json`에 서버별 시작점을 두었다.
+예를 들어 이 Repository는 GORM의 db.WithContext(ctx).Create(...).Error 형태를 씁니다. 공식 문서에는 제네릭 API 예제도 있으니, 처음에는 같은 형식의 설명을 찾아 비교하는 편이 쉽습니다.
 
-IDE를 바꾸는 것보다 `go test`, `go vet`, race detector와 debugger를 실제로 사용하는 것이 먼저다. 생성된 파일과 작성한 파일을 구분해 읽는다.
+gen은 생성된 결과입니다. 이해가 안 되는 생성 코드부터 고치기보다 .proto 원본과 직접 작성한 service, UseCase, Repository를 먼저 읽으세요.
 
-## 이 프로젝트에서 사용하는 도구
+## 3. 용어를 짧게 다시 정리해요
 
-- [Kratos v3](https://go-kratos.dev/docs/): HTTP/gRPC transport와 공통 미들웨어
-- [Fx](https://uber-go.github.io/fx/): 생성자 기반 DI, 모듈, lifecycle
-- [GORM](https://gorm.io/docs/): Entity, Preload, Transaction, false 업데이트
-- [Goose](https://github.com/pressly/goose): 스키마 버전과 마이그레이션
-- [caarlos0/env](https://github.com/caarlos0/env): 타입이 있는 환경 변수 로딩
-- [errgroup](https://pkg.go.dev/golang.org/x/sync/errgroup): 동시 작업의 오류·취소·완료 대기
+| 용어 | 이 저장소에서의 뜻 |
+| --- | --- |
+| 모듈 | go.mod로 이름과 의존성을 관리하는 프로젝트 단위 |
+| 패키지 | 함께 묶여 import되는 Go 코드 단위, 보통 같은 디렉터리 |
+| DTO | 요청·응답 등 경계에서 데이터를 전달할 타입 |
+| Entity | DB 테이블과 매핑할 구조체 |
+| UseCase | 목록 생성처럼 업무 흐름을 수행하는 코드 |
+| DI | 필요한 객체를 직접 찾아 만들기보다 생성자로 전달받는 방식 |
+| migration | 번호를 가진 스키마 변경 이력 |
+| 멱등성 | 같은 요청을 반복해도 중복 생성 같은 효과가 더 생기지 않게 하는 성질 |
+| deadline | 요청이나 작업의 마감시간 |
+| goroutine | Go 런타임이 관리하는 실행 흐름 |
 
-이 도구가 실제로 연결된 위치는 [실무 코드 안내](05-spring-guide.md)를 본다.
+용어를 먼저 외우기보다 실제 파일을 가리키면서 설명해 보세요. 예를 들어 '이 프로젝트에서 Controller 역할은 어디인가요?'라는 질문에 service/reading.go를 열 수 있으면 좋은 출발입니다.
+
+## 4. 실무 과제는 하나씩 확장하세요
+
+기초 흐름을 이해했다면 아래 순서로 한 가지씩 진행할 수 있습니다.
+
+1. 입력 검증을 하나 추가하고 업무 단위 테스트를 작성합니다.
+2. 읽음 상태 필터를 추가하고 생성되는 쿼리를 확인합니다.
+3. 요청 ID를 로그에 넣어 Gateway부터 Reading까지 추적합니다.
+4. DB와 다른 서버의 현재 상태를 확인하는 readiness를 추가합니다.
+5. 사용자 인증과 목록 소유권, 배포 환경 설정을 설계합니다.
+
+처음부터 프레임워크를 더 추가하는 것보다, 바꾼 기능이 어느 파일들을 지나고 어떤 테스트로 검증되는지 설명할 수 있는지 확인하세요.
+
+[이전: 테스트](05-testing.md) · [학습 순서](../README.md)
