@@ -1,4 +1,4 @@
-// Package server adapts Kratos transports to the Fx application lifecycle.
+// Package server connects HTTP/gRPC transports to the Fx application lifecycle.
 package server
 
 import (

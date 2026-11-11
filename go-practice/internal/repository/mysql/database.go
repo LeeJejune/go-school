@@ -1,4 +1,4 @@
-package data
+package mysql
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 
 	"github.com/LeeJejune/go-school/go-practice/internal/config"
 	"go.uber.org/fx"
-	"gorm.io/driver/mysql"
+	gormmysql "gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	gormlog "gorm.io/gorm/logger"
 )
@@ -17,7 +17,7 @@ import (
 // NewDB provides one shared GORM handle/connection pool for the application.
 // Schema changes belong to the separate Goose migration command, not AutoMigrate.
 func NewDB(lc fx.Lifecycle, cfg config.Config) (*gorm.DB, error) {
-	db, err := gorm.Open(mysql.New(mysql.Config{DSN: cfg.MySQLDSN, SkipInitializeWithVersion: true}), &gorm.Config{
+	db, err := gorm.Open(gormmysql.New(gormmysql.Config{DSN: cfg.MySQLDSN, SkipInitializeWithVersion: true}), &gorm.Config{
 		DisableAutomaticPing: true,
 		Logger: gormlog.New(log.New(os.Stderr, "gorm ", log.LstdFlags), gormlog.Config{
 			SlowThreshold: 200 * time.Millisecond, LogLevel: gormlog.Warn,

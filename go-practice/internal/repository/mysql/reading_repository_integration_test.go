@@ -1,4 +1,4 @@
-package data
+package mysql
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/LeeJejune/go-school/go-practice/internal/reading"
-	"gorm.io/driver/mysql"
+	gormmysql "gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -33,7 +33,7 @@ func TestMySQLTransactionReplayAndReadState(t *testing.T) {
 	if err = db.PingContext(ctx); err != nil {
 		t.Fatal(err)
 	}
-	orm, err := gorm.Open(mysql.New(mysql.Config{Conn: db, SkipInitializeWithVersion: true}), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	orm, err := gorm.Open(gormmysql.New(gormmysql.Config{Conn: db, SkipInitializeWithVersion: true}), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
 		t.Fatal(err)
 	}

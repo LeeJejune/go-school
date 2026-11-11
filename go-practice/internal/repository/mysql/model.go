@@ -1,5 +1,5 @@
-// Package data contains persistence adapters and GORM entities.
-package data
+// Package mysql contains persistence adapters and GORM entities.
+package mysql
 
 import "time"
 

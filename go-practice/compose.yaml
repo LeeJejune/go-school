@@ -51,6 +51,7 @@ services:
     build: .
     command: ["/app/gateway"]
     environment:
+      GIN_MODE: release
       HTTP_ADDR: 0.0.0.0:8080
       CATALOG_TARGET: catalog:9001
       READING_TARGET: reading:9002

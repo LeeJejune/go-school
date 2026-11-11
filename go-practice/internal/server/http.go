@@ -2,45 +2,60 @@ package server
 
 import (
 	"context"
+	"errors"
 	"log/slog"
+	"net"
 	"net/http"
+	"net/url"
 	"time"
 
-	pb "github.com/LeeJejune/go-school/go-practice/gen/school/v1"
 	"github.com/LeeJejune/go-school/go-practice/internal/config"
-	"github.com/LeeJejune/go-school/go-practice/internal/gateway"
-	khttp "github.com/go-kratos/kratos/v3/transport/http"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )
 
-func NewHTTP(lc fx.Lifecycle, shutdown fx.Shutdowner, cfg config.Config, logger *slog.Logger, clients *gateway.Clients, dashboard *gateway.Dashboard) (*khttp.Server, error) {
-	mux := runtime.NewServeMux()
-	if err := pb.RegisterCatalogServiceHandlerClient(context.Background(), mux, clients.Catalog); err != nil {
-		return nil, err
-	}
-	if err := pb.RegisterReadingServiceHandlerClient(context.Background(), mux, clients.Reading); err != nil {
-		return nil, err
-	}
-	if err := dashboard.Register(mux); err != nil {
-		return nil, err
-	}
-	srv := khttp.NewServer(khttp.Address(cfg.HTTPAddr), khttp.Timeout(cfg.RequestTimeout), khttp.Filter(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			started := time.Now()
-			defer func() {
-				logger.InfoContext(r.Context(), "http request", "method", r.Method, "path", r.URL.Path, "duration", time.Since(started))
-			}()
-			r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
-			next.ServeHTTP(w, r)
-		})
-	}))
-	srv.ReadHeaderTimeout = 3 * time.Second
-	srv.ReadTimeout = cfg.RequestTimeout + 3*time.Second
-	srv.WriteTimeout = cfg.RequestTimeout + 3*time.Second
-	srv.IdleTimeout = 30 * time.Second
-	srv.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte("ok\n")) })
-	srv.HandlePrefix("/", mux)
+// HTTPServer owns transport lifecycle; Gin owns routing and HTTP handlers.
+type HTTPServer struct {
+	*http.Server
+	listener net.Listener
+}
+
+func NewHTTP(lc fx.Lifecycle, shutdown fx.Shutdowner, cfg config.Config, logger *slog.Logger, router *gin.Engine) *HTTPServer {
+	srv := &HTTPServer{Server: &http.Server{
+		Addr:              cfg.HTTPAddr,
+		Handler:           router,
+		ReadHeaderTimeout: 3 * time.Second,
+		ReadTimeout:       cfg.RequestTimeout + 3*time.Second,
+		WriteTimeout:      cfg.RequestTimeout + 3*time.Second,
+		IdleTimeout:       30 * time.Second,
+	}}
 	manage(lc, shutdown, logger, srv)
-	return srv, nil
+	return srv
+}
+
+func (s *HTTPServer) Endpoint() (*url.URL, error) {
+	if s.listener == nil {
+		listener, err := net.Listen("tcp", s.Addr)
+		if err != nil {
+			return nil, err
+		}
+		s.listener = listener
+	}
+	return &url.URL{Scheme: "http", Host: s.listener.Addr().String()}, nil
+}
+
+func (s *HTTPServer) Start(context.Context) error {
+	err := s.Serve(s.listener)
+	if errors.Is(err, http.ErrServerClosed) {
+		return nil
+	}
+	return err
+}
+
+func (s *HTTPServer) Stop(ctx context.Context) error {
+	if err := s.Shutdown(ctx); err != nil {
+		_ = s.Close()
+		return err
+	}
+	return nil
 }

@@ -14,8 +14,7 @@ import (
 
 	pb "github.com/LeeJejune/go-school/go-practice/gen/school/v1"
 	"github.com/LeeJejune/go-school/go-practice/internal/config"
-	kgrpc "github.com/go-kratos/kratos/v3/transport/grpc"
-	khttp "github.com/go-kratos/kratos/v3/transport/http"
+	"github.com/LeeJejune/go-school/go-practice/internal/server"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxtest"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -28,7 +27,7 @@ func TestFullStack(t *testing.T) {
 	if dsn == "" {
 		t.Skip("MYSQL_TEST_DSN is not set")
 	}
-	var catalogServer *kgrpc.Server
+	var catalogServer *server.GRPCServer
 	catalogApp := fxtest.New(t, Catalog(), fx.NopLogger, fx.Decorate(func(cfg config.Config) config.Config {
 		cfg.CatalogAddr = "127.0.0.1:0"
 		return cfg
@@ -44,7 +43,7 @@ func TestFullStack(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var readingServer *kgrpc.Server
+	var readingServer *server.GRPCServer
 	readingApp := fxtest.New(t, Reading(), fx.NopLogger, fx.Decorate(func(cfg config.Config) config.Config {
 		cfg.ReadingAddr = "127.0.0.1:0"
 		cfg.CatalogTarget = catalogEndpoint.Host
@@ -57,7 +56,7 @@ func TestFullStack(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var gatewayServer *khttp.Server
+	var gatewayServer *server.HTTPServer
 	gatewayApp := fxtest.New(t, Gateway(), fx.NopLogger, fx.Decorate(func(cfg config.Config) config.Config {
 		cfg.HTTPAddr = "127.0.0.1:0"
 		cfg.CatalogTarget = catalogEndpoint.Host

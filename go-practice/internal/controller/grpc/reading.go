@@ -1,5 +1,5 @@
-// Package service contains transport adapters: the equivalent of Spring controllers.
-package service
+// Package grpc contains transport adapters: the equivalent of Spring controllers.
+package grpc
 
 import (
 	"context"

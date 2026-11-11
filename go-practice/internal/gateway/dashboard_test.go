@@ -2,13 +2,10 @@ package gateway
 
 import (
 	"context"
-	"encoding/json"
-	"net/http/httptest"
 	"testing"
 	"time"
 
 	pb "github.com/LeeJejune/go-school/go-practice/gen/school/v1"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -89,41 +86,5 @@ func TestDashboardFailureCancelsAndJoinsOtherRPC(t *testing.T) {
 	case <-canceled:
 	default:
 		t.Fatal("returned before the other RPC ended")
-	}
-}
-
-func TestDashboardHTTPUsesProtobufJSONAndErrorCodes(t *testing.T) {
-	for _, tc := range []struct {
-		name string
-		err  error
-		code int
-	}{{"ok", nil, 200}, {"missing", status.Error(codes.NotFound, "missing"), 404}, {"unavailable", status.Error(codes.Unavailable, "down"), 503}} {
-		t.Run(tc.name, func(t *testing.T) {
-			d := NewDashboard(&Clients{
-				Catalog: catalogStub{call: func(context.Context) (*pb.ListResourcesResponse, error) { return &pb.ListResourcesResponse{}, nil }},
-				Reading: readingStub{call: func(context.Context) (*pb.GetListResponse, error) {
-					return &pb.GetListResponse{ReadingList: &pb.ReadingList{Id: "saved", CreatedAt: "today"}}, tc.err
-				}},
-			})
-			mux := runtime.NewServeMux()
-			if err := d.Register(mux); err != nil {
-				t.Fatal(err)
-			}
-			response := httptest.NewRecorder()
-			mux.ServeHTTP(response, httptest.NewRequest("GET", "/v1/dashboard/saved", nil))
-			if response.Code != tc.code {
-				t.Fatalf("status=%d body=%s", response.Code, response.Body.String())
-			}
-			if tc.code == 200 {
-				var body struct {
-					ReadingList struct {
-						CreatedAt string `json:"createdAt"`
-					} `json:"readingList"`
-				}
-				if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil || body.ReadingList.CreatedAt != "today" {
-					t.Fatalf("JSON=%s err=%v", response.Body.String(), err)
-				}
-			}
-		})
 	}
 }

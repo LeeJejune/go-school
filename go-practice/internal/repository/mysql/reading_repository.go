@@ -1,4 +1,4 @@
-package data
+package mysql
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/LeeJejune/go-school/go-practice/internal/reading"
-	"github.com/go-sql-driver/mysql"
+	mysqldriver "github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 )
 
@@ -30,7 +30,7 @@ func (r *ReadingRepository) Create(ctx context.Context, params reading.CreatePar
 	duplicateRequest := false
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Omit("Items").Create(&entity).Error; err != nil {
-			var duplicate *mysql.MySQLError
+			var duplicate *mysqldriver.MySQLError
 			duplicateRequest = errors.As(err, &duplicate) && duplicate.Number == 1062
 			return fmt.Errorf("create list: %w", err)
 		}

@@ -2,12 +2,12 @@ package gateway
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	pb "github.com/LeeJejune/go-school/go-practice/gen/school/v1"
 	"github.com/LeeJejune/go-school/go-practice/internal/config"
-	"github.com/go-kratos/kratos/v3/middleware/logging"
-	kgrpc "github.com/go-kratos/kratos/v3/transport/grpc"
+	"github.com/LeeJejune/go-school/go-practice/internal/rpc"
 	"go.uber.org/fx"
 )
 
@@ -17,22 +17,15 @@ type Clients struct {
 }
 
 func NewClients(lc fx.Lifecycle, cfg config.Config, logger *slog.Logger) (*Clients, error) {
-	catalogConn, err := kgrpc.NewClient(context.Background(), kgrpc.WithEndpoint(cfg.CatalogTarget), kgrpc.WithTimeout(cfg.RequestTimeout), kgrpc.WithMiddleware(logging.Client(logger)))
+	catalogConn, err := rpc.NewClient(cfg.CatalogTarget, cfg.RequestTimeout, logger)
 	if err != nil {
 		return nil, err
 	}
-	readingConn, err := kgrpc.NewClient(context.Background(), kgrpc.WithEndpoint(cfg.ReadingTarget), kgrpc.WithTimeout(cfg.RequestTimeout), kgrpc.WithMiddleware(logging.Client(logger)))
+	readingConn, err := rpc.NewClient(cfg.ReadingTarget, cfg.RequestTimeout, logger)
 	if err != nil {
 		_ = catalogConn.Close()
 		return nil, err
 	}
-	lc.Append(fx.Hook{OnStop: func(context.Context) error {
-		catalogErr := catalogConn.Close()
-		readingErr := readingConn.Close()
-		if catalogErr != nil {
-			return catalogErr
-		}
-		return readingErr
-	}})
+	lc.Append(fx.Hook{OnStop: func(context.Context) error { return errors.Join(catalogConn.Close(), readingConn.Close()) }})
 	return &Clients{Catalog: pb.NewCatalogServiceClient(catalogConn), Reading: pb.NewReadingServiceClient(readingConn)}, nil
 }

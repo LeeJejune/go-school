@@ -9,13 +9,12 @@ import (
 	"github.com/LeeJejune/go-school/go-practice/internal/catalog"
 	"github.com/LeeJejune/go-school/go-practice/internal/catalogclient"
 	"github.com/LeeJejune/go-school/go-practice/internal/config"
-	"github.com/LeeJejune/go-school/go-practice/internal/data"
+	grpccontroller "github.com/LeeJejune/go-school/go-practice/internal/controller/grpc"
+	httpcontroller "github.com/LeeJejune/go-school/go-practice/internal/controller/http"
 	"github.com/LeeJejune/go-school/go-practice/internal/gateway"
 	"github.com/LeeJejune/go-school/go-practice/internal/reading"
+	mysqlrepo "github.com/LeeJejune/go-school/go-practice/internal/repository/mysql"
 	"github.com/LeeJejune/go-school/go-practice/internal/server"
-	"github.com/LeeJejune/go-school/go-practice/internal/service"
-	kgrpc "github.com/go-kratos/kratos/v3/transport/grpc"
-	khttp "github.com/go-kratos/kratos/v3/transport/http"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
 )
@@ -34,29 +33,29 @@ func common(name string) fx.Option {
 
 func Catalog() fx.Option {
 	return fx.Options(common("catalog"), fx.Module("catalog",
-		fx.Provide(catalog.New, service.NewCatalog, server.NewCatalog),
-		fx.Invoke(func(*kgrpc.Server) {}),
+		fx.Provide(catalog.New, grpccontroller.NewCatalog, server.NewCatalog),
+		fx.Invoke(func(*server.GRPCServer) {}),
 	))
 }
 
 func Reading() fx.Option {
 	return fx.Options(common("reading"), fx.Module("reading",
 		fx.Provide(
-			data.NewDB,
-			fx.Annotate(data.NewReadingRepository, fx.As(new(reading.Repository))),
+			mysqlrepo.NewDB,
+			fx.Annotate(mysqlrepo.NewReadingRepository, fx.As(new(reading.Repository))),
 			fx.Annotate(catalogclient.New, fx.As(new(reading.Catalog))),
 			func(repo reading.Repository, catalog reading.Catalog, cfg config.Config) *reading.UseCase {
 				return reading.New(repo, catalog, cfg.CatalogTimeout)
 			},
-			service.NewReading, server.NewReading,
+			grpccontroller.NewReading, server.NewReading,
 		),
-		fx.Invoke(func(*kgrpc.Server) {}),
+		fx.Invoke(func(*server.GRPCServer) {}),
 	))
 }
 
 func Gateway() fx.Option {
 	return fx.Options(common("gateway"), fx.Module("gateway",
-		fx.Provide(gateway.NewClients, gateway.NewDashboard, server.NewHTTP),
-		fx.Invoke(func(*khttp.Server) {}),
+		fx.Provide(gateway.NewClients, gateway.NewDashboard, httpcontroller.NewHandler, httpcontroller.NewRouter, server.NewHTTP),
+		fx.Invoke(func(*server.HTTPServer) {}),
 	))
 }
