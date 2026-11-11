@@ -33,7 +33,7 @@ func common(name string) fx.Option {
 
 func Catalog() fx.Option {
 	return fx.Options(common("catalog"), fx.Module("catalog",
-		fx.Provide(catalog.New, grpccontroller.NewCatalog, server.NewCatalog),
+		fx.Provide(mysqlrepo.NewDB, fx.Annotate(mysqlrepo.NewCatalogRepository, fx.As(new(catalog.Repository))), catalog.New, grpccontroller.NewCatalog, server.NewCatalog),
 		fx.Invoke(func(*server.GRPCServer) {}),
 	))
 }

@@ -4,9 +4,9 @@ package school.v1;
 
 option go_package = "github.com/LeeJejune/go-school/go-practice/gen/school/v1;schoolv1";
 
-// The catalog is read-only. Reading lists store a title snapshot, not a foreign
-// key to another service's database.
+// Reading lists store resource snapshots, not foreign keys to another service's tables.
 service CatalogService {
+  rpc UpsertResource(UpsertResourceRequest) returns (UpsertResourceResponse);
   rpc ListResources(ListResourcesRequest) returns (ListResourcesResponse);
   rpc BatchGetResources(BatchGetResourcesRequest) returns (BatchGetResourcesResponse);
 }
@@ -50,3 +50,10 @@ message SetReadRequest {
   bool is_read = 3;
 }
 message SetReadResponse {}
+
+message UpsertResourceRequest {
+  string id = 1;
+  string title = 2;
+  string url = 3;
+}
+message UpsertResourceResponse { Resource resource = 1; }

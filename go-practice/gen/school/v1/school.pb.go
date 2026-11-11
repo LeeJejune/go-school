@@ -657,6 +657,110 @@ func (*SetReadResponse) Descriptor() ([]byte, []int) {
 	return file_school_v1_school_proto_rawDescGZIP(), []int{12}
 }
 
+type UpsertResourceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Url           string                 `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpsertResourceRequest) Reset() {
+	*x = UpsertResourceRequest{}
+	mi := &file_school_v1_school_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpsertResourceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpsertResourceRequest) ProtoMessage() {}
+
+func (x *UpsertResourceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_school_v1_school_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpsertResourceRequest.ProtoReflect.Descriptor instead.
+func (*UpsertResourceRequest) Descriptor() ([]byte, []int) {
+	return file_school_v1_school_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *UpsertResourceRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *UpsertResourceRequest) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *UpsertResourceRequest) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+type UpsertResourceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Resource      *Resource              `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpsertResourceResponse) Reset() {
+	*x = UpsertResourceResponse{}
+	mi := &file_school_v1_school_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpsertResourceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpsertResourceResponse) ProtoMessage() {}
+
+func (x *UpsertResourceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_school_v1_school_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpsertResourceResponse.ProtoReflect.Descriptor instead.
+func (*UpsertResourceResponse) Descriptor() ([]byte, []int) {
+	return file_school_v1_school_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *UpsertResourceResponse) GetResource() *Resource {
+	if x != nil {
+		return x.Resource
+	}
+	return nil
+}
+
 var File_school_v1_school_proto protoreflect.FileDescriptor
 
 const file_school_v1_school_proto_rawDesc = "" +
@@ -698,8 +802,15 @@ const file_school_v1_school_proto_rawDesc = "" +
 	"\vresource_id\x18\x02 \x01(\tR\n" +
 	"resourceId\x12\x17\n" +
 	"\ais_read\x18\x03 \x01(\bR\x06isRead\"\x11\n" +
-	"\x0fSetReadResponse2\xc4\x01\n" +
-	"\x0eCatalogService\x12R\n" +
+	"\x0fSetReadResponse\"O\n" +
+	"\x15UpsertResourceRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12\x10\n" +
+	"\x03url\x18\x03 \x01(\tR\x03url\"I\n" +
+	"\x16UpsertResourceResponse\x12/\n" +
+	"\bresource\x18\x01 \x01(\v2\x13.school.v1.ResourceR\bresource2\x9b\x02\n" +
+	"\x0eCatalogService\x12U\n" +
+	"\x0eUpsertResource\x12 .school.v1.UpsertResourceRequest\x1a!.school.v1.UpsertResourceResponse\x12R\n" +
 	"\rListResources\x12\x1f.school.v1.ListResourcesRequest\x1a .school.v1.ListResourcesResponse\x12^\n" +
 	"\x11BatchGetResources\x12#.school.v1.BatchGetResourcesRequest\x1a$.school.v1.BatchGetResourcesResponse2\xdf\x01\n" +
 	"\x0eReadingService\x12I\n" +
@@ -720,7 +831,7 @@ func file_school_v1_school_proto_rawDescGZIP() []byte {
 	return file_school_v1_school_proto_rawDescData
 }
 
-var file_school_v1_school_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_school_v1_school_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_school_v1_school_proto_goTypes = []any{
 	(*Resource)(nil),                  // 0: school.v1.Resource
 	(*ListResourcesRequest)(nil),      // 1: school.v1.ListResourcesRequest
@@ -735,6 +846,8 @@ var file_school_v1_school_proto_goTypes = []any{
 	(*GetListResponse)(nil),           // 10: school.v1.GetListResponse
 	(*SetReadRequest)(nil),            // 11: school.v1.SetReadRequest
 	(*SetReadResponse)(nil),           // 12: school.v1.SetReadResponse
+	(*UpsertResourceRequest)(nil),     // 13: school.v1.UpsertResourceRequest
+	(*UpsertResourceResponse)(nil),    // 14: school.v1.UpsertResourceResponse
 }
 var file_school_v1_school_proto_depIdxs = []int32{
 	0,  // 0: school.v1.ListResourcesResponse.resources:type_name -> school.v1.Resource
@@ -743,21 +856,24 @@ var file_school_v1_school_proto_depIdxs = []int32{
 	5,  // 3: school.v1.ReadingList.items:type_name -> school.v1.ReadingItem
 	6,  // 4: school.v1.CreateListResponse.reading_list:type_name -> school.v1.ReadingList
 	6,  // 5: school.v1.GetListResponse.reading_list:type_name -> school.v1.ReadingList
-	1,  // 6: school.v1.CatalogService.ListResources:input_type -> school.v1.ListResourcesRequest
-	3,  // 7: school.v1.CatalogService.BatchGetResources:input_type -> school.v1.BatchGetResourcesRequest
-	7,  // 8: school.v1.ReadingService.CreateList:input_type -> school.v1.CreateListRequest
-	9,  // 9: school.v1.ReadingService.GetList:input_type -> school.v1.GetListRequest
-	11, // 10: school.v1.ReadingService.SetRead:input_type -> school.v1.SetReadRequest
-	2,  // 11: school.v1.CatalogService.ListResources:output_type -> school.v1.ListResourcesResponse
-	4,  // 12: school.v1.CatalogService.BatchGetResources:output_type -> school.v1.BatchGetResourcesResponse
-	8,  // 13: school.v1.ReadingService.CreateList:output_type -> school.v1.CreateListResponse
-	10, // 14: school.v1.ReadingService.GetList:output_type -> school.v1.GetListResponse
-	12, // 15: school.v1.ReadingService.SetRead:output_type -> school.v1.SetReadResponse
-	11, // [11:16] is the sub-list for method output_type
-	6,  // [6:11] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	0,  // 6: school.v1.UpsertResourceResponse.resource:type_name -> school.v1.Resource
+	13, // 7: school.v1.CatalogService.UpsertResource:input_type -> school.v1.UpsertResourceRequest
+	1,  // 8: school.v1.CatalogService.ListResources:input_type -> school.v1.ListResourcesRequest
+	3,  // 9: school.v1.CatalogService.BatchGetResources:input_type -> school.v1.BatchGetResourcesRequest
+	7,  // 10: school.v1.ReadingService.CreateList:input_type -> school.v1.CreateListRequest
+	9,  // 11: school.v1.ReadingService.GetList:input_type -> school.v1.GetListRequest
+	11, // 12: school.v1.ReadingService.SetRead:input_type -> school.v1.SetReadRequest
+	14, // 13: school.v1.CatalogService.UpsertResource:output_type -> school.v1.UpsertResourceResponse
+	2,  // 14: school.v1.CatalogService.ListResources:output_type -> school.v1.ListResourcesResponse
+	4,  // 15: school.v1.CatalogService.BatchGetResources:output_type -> school.v1.BatchGetResourcesResponse
+	8,  // 16: school.v1.ReadingService.CreateList:output_type -> school.v1.CreateListResponse
+	10, // 17: school.v1.ReadingService.GetList:output_type -> school.v1.GetListResponse
+	12, // 18: school.v1.ReadingService.SetRead:output_type -> school.v1.SetReadResponse
+	13, // [13:19] is the sub-list for method output_type
+	7,  // [7:13] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_school_v1_school_proto_init() }
@@ -771,7 +887,7 @@ func file_school_v1_school_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_school_v1_school_proto_rawDesc), len(file_school_v1_school_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

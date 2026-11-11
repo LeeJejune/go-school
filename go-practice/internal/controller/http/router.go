@@ -30,6 +30,7 @@ func NewRouter(cfg config.Config, logger *slog.Logger, h *Handler) *gin.Engine {
 	v1 := router.Group("/v1")
 	{
 		v1.GET("/resources", h.ListResources)
+		v1.PUT("/resources/:id", h.UpsertResource)
 		v1.POST("/lists", h.CreateList)
 		v1.GET("/lists/:id", h.GetList)
 		v1.PATCH("/lists/:id/items/:resourceID", h.SetRead)

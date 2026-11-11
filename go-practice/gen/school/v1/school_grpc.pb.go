@@ -19,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	CatalogService_UpsertResource_FullMethodName    = "/school.v1.CatalogService/UpsertResource"
 	CatalogService_ListResources_FullMethodName     = "/school.v1.CatalogService/ListResources"
 	CatalogService_BatchGetResources_FullMethodName = "/school.v1.CatalogService/BatchGetResources"
 )
@@ -27,9 +28,9 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// The catalog is read-only. Reading lists store a title snapshot, not a foreign
-// key to another service's database.
+// Reading lists store resource snapshots, not foreign keys to another service's tables.
 type CatalogServiceClient interface {
+	UpsertResource(ctx context.Context, in *UpsertResourceRequest, opts ...grpc.CallOption) (*UpsertResourceResponse, error)
 	ListResources(ctx context.Context, in *ListResourcesRequest, opts ...grpc.CallOption) (*ListResourcesResponse, error)
 	BatchGetResources(ctx context.Context, in *BatchGetResourcesRequest, opts ...grpc.CallOption) (*BatchGetResourcesResponse, error)
 }
@@ -40,6 +41,16 @@ type catalogServiceClient struct {
 
 func NewCatalogServiceClient(cc grpc.ClientConnInterface) CatalogServiceClient {
 	return &catalogServiceClient{cc}
+}
+
+func (c *catalogServiceClient) UpsertResource(ctx context.Context, in *UpsertResourceRequest, opts ...grpc.CallOption) (*UpsertResourceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpsertResourceResponse)
+	err := c.cc.Invoke(ctx, CatalogService_UpsertResource_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *catalogServiceClient) ListResources(ctx context.Context, in *ListResourcesRequest, opts ...grpc.CallOption) (*ListResourcesResponse, error) {
@@ -66,9 +77,9 @@ func (c *catalogServiceClient) BatchGetResources(ctx context.Context, in *BatchG
 // All implementations must embed UnimplementedCatalogServiceServer
 // for forward compatibility.
 //
-// The catalog is read-only. Reading lists store a title snapshot, not a foreign
-// key to another service's database.
+// Reading lists store resource snapshots, not foreign keys to another service's tables.
 type CatalogServiceServer interface {
+	UpsertResource(context.Context, *UpsertResourceRequest) (*UpsertResourceResponse, error)
 	ListResources(context.Context, *ListResourcesRequest) (*ListResourcesResponse, error)
 	BatchGetResources(context.Context, *BatchGetResourcesRequest) (*BatchGetResourcesResponse, error)
 	mustEmbedUnimplementedCatalogServiceServer()
@@ -81,6 +92,9 @@ type CatalogServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedCatalogServiceServer struct{}
 
+func (UnimplementedCatalogServiceServer) UpsertResource(context.Context, *UpsertResourceRequest) (*UpsertResourceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpsertResource not implemented")
+}
 func (UnimplementedCatalogServiceServer) ListResources(context.Context, *ListResourcesRequest) (*ListResourcesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListResources not implemented")
 }
@@ -106,6 +120,24 @@ func RegisterCatalogServiceServer(s grpc.ServiceRegistrar, srv CatalogServiceSer
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&CatalogService_ServiceDesc, srv)
+}
+
+func _CatalogService_UpsertResource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpsertResourceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CatalogServiceServer).UpsertResource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CatalogService_UpsertResource_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CatalogServiceServer).UpsertResource(ctx, req.(*UpsertResourceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _CatalogService_ListResources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -151,6 +183,10 @@ var CatalogService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "school.v1.CatalogService",
 	HandlerType: (*CatalogServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "UpsertResource",
+			Handler:    _CatalogService_UpsertResource_Handler,
+		},
 		{
 			MethodName: "ListResources",
 			Handler:    _CatalogService_ListResources_Handler,

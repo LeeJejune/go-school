@@ -9,6 +9,11 @@ type createListRequest struct {
 	ResourceIDs []string `json:"resourceIds" binding:"required"`
 }
 
+type upsertResourceRequest struct {
+	Title string `json:"title" binding:"required"`
+	URL   string `json:"url" binding:"required"`
+}
+
 type setReadRequest struct {
 	IsRead bool `json:"isRead"`
 }

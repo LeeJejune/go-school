@@ -1,0 +1,65 @@
+# 먼저 go-practice에서 make up을 실행하세요.
+# 위에서 아래로 요청을 실행합니다. 자료는 서버 코드가 아닌 이 요청으로 등록합니다.
+@baseUrl = http://localhost:8080
+@resourceOneID = go-tour
+@resourceTwoID = go-context
+@requestKey = first-java-go-001
+# 5번 응답의 readingList.id를 복사해 아래 값을 바꾸세요.
+@listID = REPLACE_WITH_READING_LIST_ID
+
+### 1. 서버 확인
+GET {{baseUrl}}/healthz
+
+### 2. 첫 자료 등록 — 같은 ID로 다시 보내면 제목/URL 갱신
+PUT {{baseUrl}}/v1/resources/{{resourceOneID}}
+Content-Type: application/json
+
+{
+  "title": "A Tour of Go",
+  "url": "https://go.dev/tour/"
+}
+
+### 3. 두 번째 자료 등록
+PUT {{baseUrl}}/v1/resources/{{resourceTwoID}}
+Content-Type: application/json
+
+{
+  "title": "Go Context",
+  "url": "https://pkg.go.dev/context"
+}
+
+### 4. 등록된 자료 조회 — 등록 전에는 resources가 빈 배열
+GET {{baseUrl}}/v1/resources
+
+### 5. 읽기 목록 생성 — 응답의 readingList.id를 위 listID에 복사
+# 같은 requestKey와 같은 내용은 같은 목록을 반환합니다.
+# 새 목록을 만들려면 requestKey를 바꾸세요.
+POST {{baseUrl}}/v1/lists
+Content-Type: application/json
+
+{
+  "requestKey": "{{requestKey}}",
+  "title": "Go 시작하기",
+  "resourceIds": ["{{resourceOneID}}", "{{resourceTwoID}}"]
+}
+
+### 6. 목록 조회
+GET {{baseUrl}}/v1/lists/{{listID}}
+
+### 7. 읽음으로 변경 — 성공 응답은 {}
+PATCH {{baseUrl}}/v1/lists/{{listID}}/items/{{resourceOneID}}
+Content-Type: application/json
+
+{"isRead": true}
+
+### 8. 대시보드 — 두 gRPC 조회를 동시에 실행
+GET {{baseUrl}}/v1/dashboard/{{listID}}
+
+### 9. 미읽음으로 변경
+PATCH {{baseUrl}}/v1/lists/{{listID}}/items/{{resourceOneID}}
+Content-Type: application/json
+
+{"isRead": false}
+
+### 10. 변경 결과 조회
+GET {{baseUrl}}/v1/lists/{{listID}}

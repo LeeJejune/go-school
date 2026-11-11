@@ -22,7 +22,12 @@ import (
 
 type catalogClientStub struct {
 	pb.CatalogServiceClient
-	list func(context.Context) (*pb.ListResourcesResponse, error)
+	list   func(context.Context) (*pb.ListResourcesResponse, error)
+	upsert func(context.Context, *pb.UpsertResourceRequest) (*pb.UpsertResourceResponse, error)
+}
+
+func (s catalogClientStub) UpsertResource(ctx context.Context, req *pb.UpsertResourceRequest, _ ...grpc.CallOption) (*pb.UpsertResourceResponse, error) {
+	return s.upsert(ctx, req)
 }
 
 func (s catalogClientStub) ListResources(ctx context.Context, _ *pb.ListResourcesRequest, _ ...grpc.CallOption) (*pb.ListResourcesResponse, error) {
@@ -70,11 +75,15 @@ func serve(router *gin.Engine, method, path, body string) *httptest.ResponseReco
 }
 
 func TestGinJSONContractAndRPCMapping(t *testing.T) {
+	var resource *pb.UpsertResourceRequest
 	var created *pb.CreateListRequest
 	var updated *pb.SetReadRequest
 	list := &pb.ReadingList{Id: "saved", Title: "Go", CreatedAt: "today", Items: []*pb.ReadingItem{{Resource: &pb.Resource{Id: "go-tour"}}}}
 	clients := &gateway.Clients{
-		Catalog: catalogClientStub{},
+		Catalog: catalogClientStub{upsert: func(_ context.Context, req *pb.UpsertResourceRequest) (*pb.UpsertResourceResponse, error) {
+			resource = req
+			return &pb.UpsertResourceResponse{Resource: &pb.Resource{Id: req.Id, Title: req.Title, Url: req.Url}}, nil
+		}},
 		Reading: readingClientStub{
 			create: func(_ context.Context, req *pb.CreateListRequest) (*pb.CreateListResponse, error) {
 				created = req
@@ -93,6 +102,10 @@ func TestGinJSONContractAndRPCMapping(t *testing.T) {
 		},
 	}
 	router := testRouter(clients, time.Second)
+	upserted := serve(router, "PUT", "/v1/resources/my-resource", `{"title":"My resource","url":"https://example.com/"}`)
+	if upserted.Code != 200 || resource == nil || resource.Id != "my-resource" || resource.Title != "My resource" || !strings.Contains(upserted.Body.String(), `"url":"https://example.com/"`) {
+		t.Fatalf("upsert status=%d body=%s request=%v", upserted.Code, upserted.Body, resource)
+	}
 	result := serve(router, "POST", "/v1/lists", `{"requestKey":"study-001","title":"Go","resourceIds":["go-tour"],"ignored":1}`)
 	if result.Code != 200 || created == nil || created.RequestKey != "study-001" || len(created.ResourceIds) != 1 {
 		t.Fatalf("status=%d body=%s request=%v", result.Code, result.Body, created)
@@ -148,6 +161,10 @@ func TestGinRejectsInvalidBodiesBeforeRPC(t *testing.T) {
 	result := serve(router, "POST", "/v1/lists", `{"title":"Go"}`)
 	if result.Code != 400 {
 		t.Fatalf("missing required fields=%d", result.Code)
+	}
+	result = serve(router, "PUT", "/v1/resources/my-resource", `{"title":"Go"}`)
+	if result.Code != 400 {
+		t.Fatalf("missing URL=%d", result.Code)
 	}
 }
 
