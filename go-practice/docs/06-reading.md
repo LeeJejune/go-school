@@ -9,8 +9,8 @@
 | :=, *, &, interface가 낯설어요 | [go-basic 학습 순서](../../go-basic/README.md) | 1~4장의 실행 예제 |
 | 브라우저에서 문법을 바꿔 보고 싶어요 | [A Tour of Go](https://go.dev/tour/) | 패키지, 함수, 포인터, 메서드 |
 | gRPC가 다른 서버를 어떻게 호출하나요? | [gRPC 소개](https://grpc.io/docs/what-is-grpc/introduction/) | 서비스 정의와 생성된 클라이언트 |
-| HTTP JSON은 어떻게 연결되나요? | [grpc-gateway 공식 저장소](https://github.com/grpc-ecosystem/grpc-gateway) | 생성된 HTTP 처리 코드 |
-| 서버 옵션과 공통 처리는 어디서 보나요? | [Kratos](https://go-kratos.dev/docs/) | HTTP/gRPC transport와 middleware |
+| HTTP JSON은 어떻게 연결되나요? | [Gin](https://gin-gonic.com/en/docs/) | 라우팅, 바인딩, JSON 응답 |
+| RPC 서버와 공통 처리는 어디서 보나요? | [grpc-go](https://github.com/grpc/grpc-go), [go-grpc-middleware](https://github.com/grpc-ecosystem/go-grpc-middleware) | 서버·클라이언트와 interceptor |
 | Fx가 생성자를 언제 호출하나요? | [Fx 시작 안내](https://uber-go.github.io/fx/get-started/) | Provide, Invoke, Lifecycle |
 | GORM으로 조회·저장하는 법은요? | [GORM](https://gorm.io/docs/) | Query, Update, Transaction, Preload |
 | 스키마 변경 이력을 어떻게 관리하나요? | [Goose 공식 저장소](https://github.com/pressly/goose) | SQL migration과 Provider |
@@ -25,7 +25,7 @@
 
 예를 들어 이 Repository는 GORM의 db.WithContext(ctx).Create(...).Error 형태를 씁니다. 공식 문서에는 제네릭 API 예제도 있으니, 처음에는 같은 형식의 설명을 찾아 비교하는 편이 쉽습니다.
 
-gen은 생성된 결과입니다. 이해가 안 되는 생성 코드부터 고치기보다 .proto 원본과 직접 작성한 service, UseCase, Repository를 먼저 읽으세요.
+gen은 생성된 결과입니다. 이해가 안 되는 생성 코드부터 고치기보다 .proto 원본과 직접 작성한 Controller, UseCase, Repository를 먼저 읽으세요.
 
 ## 3. 용어를 짧게 다시 정리해요
 
@@ -42,7 +42,7 @@ gen은 생성된 결과입니다. 이해가 안 되는 생성 코드부터 고�
 | deadline | 요청이나 작업의 마감시간 |
 | goroutine | Go 런타임이 관리하는 실행 흐름 |
 
-용어를 먼저 외우기보다 실제 파일을 가리키면서 설명해 보세요. 예를 들어 '이 프로젝트에서 Controller 역할은 어디인가요?'라는 질문에 service/reading.go를 열 수 있으면 좋은 출발입니다.
+용어를 먼저 외우기보다 실제 파일을 가리키면서 설명해 보세요. 예를 들어 '이 프로젝트에서 Controller 역할은 어디인가요?'라는 질문에 controller/grpc/reading.go를 열 수 있으면 좋은 출발입니다.
 
 ## 4. 실무 과제는 하나씩 확장하세요
 
@@ -56,4 +56,4 @@ gen은 생성된 결과입니다. 이해가 안 되는 생성 코드부터 고�
 
 처음부터 프레임워크를 더 추가하는 것보다, 바꾼 기능이 어느 파일들을 지나고 어떤 테스트로 검증되는지 설명할 수 있는지 확인하세요.
 
-[이전: 테스트](05-testing.md) · [학습 순서](../README.md)
+[이전: 테스트](05-testing.md) · [다음: 국내외 프로젝트 비교](07-project-comparison.md) · [학습 순서](../README.md)

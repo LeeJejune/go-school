@@ -27,7 +27,7 @@ Docker Desktop을 켠 뒤 저장소 루트에서 실행합니다.
 make -C go-practice up
 ```
 
-http://localhost:8080/v1/resources 에서 JSON 응답을 확인합니다. 목록 생성과 읽음 상태 변경은 [서버 README](go-practice/README.md), 실제 코드를 읽는 시작점은 [Spring 역할 대응 문서](go-practice/docs/01-spring-to-go.md)에 있습니다.
+http://localhost:8080/v1/resources 에서 JSON 응답을 확인합니다. 처음에는 빈 배열이 정상입니다. [HTTP 요청 파일](go-practice/requests/school.http)이나 [Postman 컬렉션](go-practice/requests/go-practice.postman_collection.json)으로 자료를 등록하세요. 목록 생성과 읽음 상태 변경은 [서버 README](go-practice/README.md), 실제 코드를 읽는 시작점은 [Spring 역할 대응 문서](go-practice/docs/01-spring-to-go.md)에 있습니다.
 
 종료할 때는 다음을 실행합니다. DB 볼륨은 유지합니다.
 

@@ -1,120 +1,103 @@
-# 01. Spring의 Controller·Service·Repository를 여기서 찾기
+# 01. Spring의 역할로 Go 파일 찾기
 
-이 장의 목표는 **어떤 기능이 어느 파일에 있는지 찾는 것**입니다. 먼저 [README의 실행 실습](../README.md)을 따라 자료 목록 응답을 한 번 확인하면 이해하기 쉽습니다.
+목표는 **요청 하나가 어느 파일을 거치는지 설명하는 것**입니다. [README](../README.md)에서 서버를 실행하고 HTTP 파일의 요청을 순서대로 보내 보세요.
 
-## 1. 이 서비스는 무엇을 저장하나요?
+## 1. Gateway, Catalog, Reading은 애플리케이션 이름입니다
 
-공부할 문서를 골라 읽을거리 목록을 만드는 예제입니다.
-
-- 자료: A Tour of Go 같은 문서의 ID, 제목, URL
-- 목록: 자료들을 선택해 만든 'Go 시작하기' 목록
-- 읽음 상태: 목록의 각 자료를 읽었는지 나타내는 true/false
-
-Catalog는 자료 정보를 제공하고, Reading은 만든 목록과 읽음 상태를 DB에 저장합니다.
-
-## 2. 이름 세 개는 애플리케이션 세 개예요
-
-Spring Boot 애플리케이션 세 개를 각각 다른 포트로 실행한다고 생각해 보세요.
-
-| 애플리케이션 | 하는 일 | DB 사용 |
+| 앱 | 역할 | 저장 |
 | --- | --- | --- |
-| Gateway :8080 | HTTP 요청을 받아 다른 서버를 호출하고 JSON으로 응답 | 직접 사용하지 않음 |
-| Catalog :9001 | 준비된 자료 4개의 정보를 제공 | 코드에 자료를 보관 |
-| Reading :9002 | 목록 생성·조회·읽음 상태 변경 | MySQL 사용 |
+| Gateway :8080 | Gin으로 HTTP 요청 수신, RPC 호출, JSON 응답 | DB 직접 사용 안 함 |
+| Catalog :9001 | 자료 등록·수정·조회 | catalog_resources 테이블 |
+| Reading :9002 | 읽기 목록 생성·조회·읽음 상태 변경 | reading_lists, reading_items 테이블 |
 
-이 세 이름은 Controller, Service, Repository 같은 계층을 뜻하지 않습니다. 각 애플리케이션 안에 요청 처리와 업무 코드가 있습니다.
+세 앱 모두 별도 프로세스입니다. Controller/Service/Repository 같은 계층의 이름이 아닙니다. 통신과 장애를 실습하려고 나눴으며, 작은 서비스를 만들 때 항상 세 서버가 필요한 것은 아닙니다.
 
 ```mermaid
 flowchart LR
-    U["브라우저 / curl"] -->|"HTTP · JSON"| G["Gateway"]
-    G -->|"gRPC"| C["Catalog"]
-    G -->|"gRPC"| R["Reading"]
-    R -->|"자료 확인 · gRPC"| C
-    R -->|"GORM"| D[("MySQL")]
+    U["HTTP 파일 / Postman"] --> G["Gateway · Gin"]
+    G -->|gRPC| C["Catalog"]
+    G -->|gRPC| R["Reading"]
+    R -->|자료 확인 · gRPC| C
+    C -->|GORM| D[(MySQL)]
+    R -->|GORM| D
 ```
 
-gRPC는 뒤에서 자세히 다룹니다. 지금은 '서버끼리 정해진 메서드를 호출하는 통신'이라고 이해하면 됩니다. 서버를 나눈 이유는 통신과 실패를 실습하기 위해서입니다. Go 웹 개발을 시작할 때 항상 서버를 세 개로 나눌 필요는 없습니다.
+로컬 편의상 DB 하나를 공유하지만, Catalog와 Reading은 각자 소유한 테이블만 접근합니다. Reading은 Catalog 테이블을 직접 JOIN하지 않습니다.
 
-## 3. 먼저 익숙한 역할에 대응시켜 보세요
+## 2. 익숙한 역할에 대응시키세요
 
-| Spring에서 찾던 것 | 이 프로젝트에서 볼 곳 | 맡은 일 |
+| Spring | Go 파일 | 하는 일 |
 | --- | --- | --- |
-| Controller | [internal/service/reading.go](../internal/service/reading.go) | 요청을 받고 결과와 오류를 응답 형식으로 변환 |
-| 업무 Service | [internal/reading/usecase.go](../internal/reading/usecase.go) | 검증 → 자료 조회 → 저장 순서 결정 |
-| Repository 인터페이스 | [internal/reading/model.go](../internal/reading/model.go) | 업무 코드가 필요한 저장 동작 정의 |
-| Repository 구현체 | [internal/data/reading_repository.go](../internal/data/reading_repository.go) | GORM으로 실제 MySQL 접근 |
-| Entity | [internal/data/model.go](../internal/data/model.go) | DB 테이블·필드와 Go 구조체 매핑 |
-| 요청·응답 DTO 원본 | [school.proto](../api/proto/school/v1/school.proto) | 서버 간 주고받는 메시지 정의 |
-| @Configuration / @Bean | [internal/app/app.go](../internal/app/app.go) | 생성자와 구현체를 DI 컨테이너에 등록 |
+| @PostMapping | [controller/http/router.go](../internal/controller/http/router.go) | URL과 메서드 연결 |
+| @RequestBody DTO | [controller/http/dto.go](../internal/controller/http/dto.go) | JSON 필드·입력 형식 정의 |
+| @RestController | [controller/http/reading.go](../internal/controller/http/reading.go) | HTTP DTO → RPC 요청, 응답 → JSON |
+| RPC Controller | [controller/grpc/reading.go](../internal/controller/grpc/reading.go) | RPC DTO → 업무 입력, 업무 오류 → gRPC 상태 |
+| @Service | [reading/usecase.go](../internal/reading/usecase.go) | 검증 → 자료 조회 → 저장 순서 결정 |
+| Repository 인터페이스 | [reading/model.go](../internal/reading/model.go) | 필요한 저장 동작 정의 |
+| Repository 구현체 | [repository/mysql/reading_repository.go](../internal/repository/mysql/reading_repository.go) | GORM 쿼리·트랜잭션 |
+| @Entity | [repository/mysql/model.go](../internal/repository/mysql/model.go) | DB 컬럼·관계 매핑 |
+| @Configuration / @Bean | [app/app.go](../internal/app/app.go) | 생성자와 구현체 연결 |
 
-폴더 이름 service가 Spring의 @Service 역할과 정확히 일치하지 않아 헷갈릴 수 있습니다. 이 예제의 service 패키지는 **요청 처리 어댑터라 Controller 역할**에 가깝고, 업무 로직은 reading.UseCase에 있습니다.
+UseCase는 '목록을 생성한다' 같은 업무 흐름을 뜻합니다. 이 프로젝트에서는 Spring Service 역할입니다. 폴더를 service로 이름 붙여야만 Service가 되는 것은 아닙니다.
 
-UseCase는 '목록을 만든다'처럼 하나의 사용 목적을 수행하는 코드라는 뜻입니다. Go가 요구하는 특별한 키워드는 아닙니다.
+## 3. model.go와 school.proto는 같은 것이 아닙니다
 
-## 4. CreateList를 한 번 따라가세요
+Go에서 model.go는 특별한 기능을 가진 파일명이 아닙니다. 파일 안의 타입과 import를 보세요.
 
-[Controller 역할의 파일](../internal/service/reading.go)을 열어 CreateList를 찾습니다.
+| 타입 | 용도 | 바뀌는 이유 |
+| --- | --- | --- |
+| HTTP DTO: createListRequest | 외부 JSON 입력 | HTTP API 필드 변경 |
+| RPC DTO: pb.CreateListRequest | 서버 간 전송 | RPC 계약 변경 |
+| 업무 모델: reading.List | 업무 규칙에 맞춘 데이터 | 목록 업무 변경 |
+| DB Entity: mysql.ListEntity | 테이블 매핑 | DB 컬럼·인덱스 변경 |
+
+`.proto`는 RPC DTO와 메서드의 **원본 계약**입니다. `make generate`가 [gen/school/v1](../gen/school/v1)에 Go 타입과 클라이언트·서버 인터페이스를 만듭니다. DB 테이블을 만드는 파일은 [migrations](../migrations)입니다.
+
+서로 닮은 필드가 있어도 역할이 다르므로 Controller와 Repository에서 변환합니다. 예를 들어 DB 컬럼 이름을 바꿨다고 HTTP JSON 필드까지 같이 바꿀 필요가 없습니다.
+
+## 4. pb는 패키지 별칭입니다
+
+[RPC Controller](../internal/controller/grpc/catalog.go)의 import를 보세요.
 
 ```go
-func (s *Reading) CreateList(ctx context.Context, req *pb.CreateListRequest) (*pb.CreateListResponse, error) {
-    list, err := s.usecase.Create(ctx, reading.CreateInput{
-        RequestKey: req.GetRequestKey(),
-        Title: req.GetTitle(),
-        ResourceIDs: req.GetResourceIds(),
-    })
-    if err != nil {
-        return nil, s.rpcError(ctx, err)
-    }
-    return &pb.CreateListResponse{ReadingList: toProto(list)}, nil
-}
+import pb "github.com/LeeJejune/go-school/go-practice/gen/school/v1"
 ```
 
-위는 실제 메서드를 읽기 편하게 줄을 나눈 코드입니다. 파일 전체가 아니므로 별도 main.go에 붙여 실행하는 예시는 아닙니다.
+`pb`는 개발자가 붙인 짧은 이름입니다. Go 예약어가 아닙니다. 이 파일에서 `pb.Resource`는 '위 경로에서 import한 패키지의 Resource 타입'입니다. 관례적으로 protobuf를 줄여 pb라고 쓰지만 다른 이름도 가능합니다.
 
-- (s *Reading): Reading 타입의 메서드이고, s는 Java의 this에 해당하는 대상을 가리킵니다.
-- req: 요청 DTO를 가리키는 포인터입니다.
-- pb: import할 때 생성된 Protobuf 패키지에 붙인 별명입니다.
-- ctx: 이번 요청의 취소와 제한 시간을 전달합니다.
-- 반환값 두 개: 응답과 오류를 돌려줍니다.
+`catalog.Catalog`도 같은 방식입니다. catalog 패키지에 있는 Catalog 타입입니다. 점 앞이 패키지 이름인지 변수인지 import와 선언을 함께 보세요.
 
-이 메서드는 요청 DTO를 reading.CreateInput으로 바꿔 업무 코드를 호출합니다. 그다음 [UseCase.Create](../internal/reading/usecase.go)로 이동해 세 곳을 찾으세요.
+## 5. &와 *는 위치를 나눠 읽으세요
 
-1. title과 ResourceIDs 검사: 잘못된 입력을 거절합니다.
-2. u.catalog.GetResources: Catalog 서버에서 자료를 확인합니다.
-3. u.repo.Create: 검증된 목록을 저장합니다.
-
-마지막으로 [Repository.Create](../internal/data/reading_repository.go)를 열면 GORM Transaction과 Create가 보입니다. 여기까지가 생성 요청의 핵심 경로입니다.
-
-## 5. model.go와 school.proto는 왜 비슷하게 생겼나요?
-
-같은 목록을 사용 목적에 맞게 다른 타입으로 표현하기 때문입니다.
-
-| 타입 | 용도 |
+| 표현 | 읽는 방법 |
 | --- | --- |
-| pb.ReadingList | 외부에 보낼 통신 DTO |
-| reading.List | 업무 코드에서 사용하는 목록 |
-| data.ListEntity | DB 테이블에 매핑할 Entity |
+| `value := T{}` | T 타입의 구조체 값 생성 |
+| `p := &value` | value의 주소를 얻음. p의 타입은 *T |
+| `var p *T` | T를 가리키는 포인터 변수 선언. 초기값은 nil |
+| `copied := *p` | p가 가리키는 값을 읽어서 복사 |
+| `&pb.ListResourcesResponse{}` | 응답 구조체 값을 만들고 그 주소를 얻음 |
+| `*catalog.Catalog` | catalog.Catalog를 가리키는 포인터 **타입** |
 
-예를 들어 업무·DB 모델의 CreatedAt은 time.Time이지만, 통신 계약의 created_at은 string입니다. [toProto](../internal/service/reading.go)가 업무 모델을 통신 DTO로 바꿉니다.
-
-school.proto를 수정하면 생성 도구가 gen 아래 DTO와 RPC 코드를 다시 만듭니다. reading/model.go나 data/model.go를 자동으로 함께 수정하지는 않습니다. Java에서 Entity와 Response DTO를 분리하고 매핑하던 상황을 떠올리면 됩니다.
-
-## 6. main.go가 짧은 이유
-
-[cmd/reading/main.go](../cmd/reading/main.go)는 다음 한 줄로 앱을 실행합니다.
+`*`는 **타입 자리에서는 포인터 타입**, `*p`처럼 **값을 사용하는 자리에서는 역참조**입니다. `*catalog.Catalog`라는 타입을 적는 것만으로 객체가 생기지는 않습니다.
 
 ```go
-func main() { fx.New(app.Reading()).Run() }
+func NewCatalog(catalog *catalog.Catalog, logger *slog.Logger) *Catalog
 ```
 
-실제 객체 조립은 app.Reading에 있고, Fx라는 DI 라이브러리가 생성자들을 연결합니다. main이 짧다고 설정이나 서버 기능이 사라진 것은 아닙니다. 이 부분은 [4장](04-architecture.md)에서 읽습니다.
+위는 실제 생성자의 선언 부분입니다. 인자의 `catalog`는 변수명, `*catalog.Catalog`는 인자 타입, 마지막 `*Catalog`는 반환 타입입니다. 생성자는 인자로 받은 업무 객체의 포인터를 Controller에 보관합니다.
 
-## 확인 문제
+Java 참조처럼 같은 대상에 접근할 수 있지만 Go는 값과 포인터를 구분합니다. 포인터도 인자로 전달할 때 그 포인터 값이 복사됩니다. nil 포인터 역참조는 panic을 일으킵니다. 구조체에 slice·map·포인터 필드가 있으면 구조체 복사만으로 내부 데이터까지 독립 복사되지는 않습니다.
 
-1. 목록 제목의 길이 제한을 바꾸려면 어느 파일을 보나요?
-2. DB의 컬럼 매핑을 찾으려면 어느 파일을 보나요?
-3. Catalog, Reading, Gateway를 Controller, Service, Repository 순서라고 이해하면 왜 헷갈리나요?
+작게 실행해 보는 연습은 [go-basic 포인터 설명](../../go-basic/docs/03-struct-methods.md)에 있습니다.
 
-답: 업무 검증은 reading/usecase.go, 컬럼 매핑은 data/model.go입니다. 세 서버 이름은 애플리케이션의 분리이고, 계층은 각 애플리케이션 안에 있기 때문입니다.
+## 6. 첫 코드는 이 순서로 읽으세요
 
-[다음: HTTP 요청과 gRPC](02-grpc.md) · [학습 순서](../README.md)
+1. router.go에서 `POST /v1/lists`를 찾습니다.
+2. HTTP CreateList에서 JSON 입력과 RPC 호출을 봅니다.
+3. gRPC CreateList에서 업무 입력으로 바꾸는 부분을 봅니다.
+4. UseCase.Create에서 입력 검증과 Catalog 조회를 봅니다.
+5. Repository.Create에서 트랜잭션을 봅니다.
+
+Controller가 ORM을 직접 호출하거나 업무 코드가 gin.Context를 요구하는지 확인해 보세요. 현재 업무 패키지는 Gin·gRPC·GORM을 import하지 않고 일반 Go 값과 context.Context를 받습니다.
+
+[학습 순서](../README.md) · [다음: HTTP와 gRPC](02-grpc.md)

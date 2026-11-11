@@ -94,6 +94,39 @@ markRead는 원본을 찾아갈 수 있는 주소를 받았으므로 원본의 R
 
 처음부터 메모리 주소 계산을 공부할 필요는 없습니다. **Article을 받으면 구조체 값의 복사본, *Article을 받으면 원본에 접근할 수 있는 포인터를 받는다**고 생각하세요.
 
+## `*`가 값 앞에 있으면 의미가 달라져요
+
+`*Article`은 타입을 쓰는 자리이고, `*p`는 포인터가 가리키는 값을 읽는 표현입니다.
+
+```go
+package main
+
+import "fmt"
+
+type Article struct { Title string }
+
+func main() {
+    value := Article{Title: "처음 제목"}
+    p := &value        // p의 타입은 *Article
+    copied := *p       // p가 가리키는 Article 값을 복사
+    p.Title = "변경한 제목"
+
+    fmt.Println(value.Title)
+    fmt.Println(copied.Title)
+}
+```
+
+```text
+변경한 제목
+처음 제목
+```
+
+`p.Title`은 원본 필드를 바꿉니다. 포인터가 가리키는 구조체 필드에 접근할 때 `(*p).Title`을 줄여 쓸 수 있습니다. `copied`는 별도 구조체 값입니다. 구조체 안에 slice·map·포인터가 있다면 내부 데이터까지 독립 복사되는 것은 아닙니다.
+
+서버 코드의 `*catalog.Catalog`도 같은 포인터 타입입니다. `catalog.Catalog`는 catalog 패키지의 Catalog 타입이고 `*`가 그 타입을 가리키는 포인터임을 표시합니다.
+
+`&pb.ListResourcesResponse{}`는 pb 패키지의 응답 구조체를 만들고 주소를 얻습니다. `pb`는 import 별칭이며 `&`나 `*`와 관계없는 이름입니다. [서버 코드에서 pb와 포인터 읽기](../../go-practice/docs/01-spring-to-go.md)에서 실제 import를 확인할 수 있습니다.
+
 ## 4. 함수를 타입에 붙이면 메서드가 돼요
 
 저장소는 앞의 함수를 다음 메서드로 작성했습니다.

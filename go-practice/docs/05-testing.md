@@ -63,7 +63,9 @@ TestCatalogFailureDoesNotWrite를 읽으면 Catalog 조회가 실패했을 때 �
 | 읽을 파일 | 확인할 질문 |
 | --- | --- |
 | [reading/usecase_test.go](../internal/reading/usecase_test.go) | 빈 값·중복 입력을 거절하고 저장 전에 검증하는가? |
-| [service/reading_test.go](../internal/service/reading_test.go) | 업무 오류가 올바른 gRPC 코드로 바뀌는가? |
+| [controller/grpc/reading_test.go](../internal/controller/grpc/reading_test.go) | 업무 오류가 올바른 gRPC 코드로 바뀌는가? |
+| [controller/http/router_test.go](../internal/controller/http/router_test.go) | JSON 바인딩·상태 코드·제한 시간·취소·panic 처리는 맞는가? |
+| [rpc/middleware_test.go](../internal/rpc/middleware_test.go) | 실제 gRPC 연결에서 panic 복구와 제한 시간이 적용되는가? |
 | [app/app_test.go](../internal/app/app_test.go) | Fx에 등록한 의존성들이 빠짐없이 연결되는가? |
 | [config/config_test.go](../internal/config/config_test.go) | 잘못된 제한 시간이나 풀 크기를 거절하는가? |
 | [gateway/dashboard_test.go](../internal/gateway/dashboard_test.go) | 두 조회를 동시에 시작하고, 실패하면 취소·완료를 기다리는가? |
@@ -82,14 +84,17 @@ make test-db
 
 | 테스트 | 실제로 사용하는 것 |
 | --- | --- |
-| [data/reading_repository_integration_test.go](../internal/data/reading_repository_integration_test.go) | GORM과 로컬 MySQL |
+| [repository/mysql/reading_repository_integration_test.go](../internal/repository/mysql/reading_repository_integration_test.go) | GORM과 로컬 MySQL |
+| [repository/mysql/catalog_repository_integration_test.go](../internal/repository/mysql/catalog_repository_integration_test.go) | 자료 upsert, 중복 방지, 입력 순서 보존 |
 | [app/integration_test.go](../internal/app/integration_test.go) | HTTP Gateway, 두 gRPC 서버, GORM, MySQL |
 
-저장소 테스트는 같은 키의 동시 생성, 내용 충돌, 항목 저장 실패 시 rollback, true/false 반복 변경을 확인합니다. 전체 API 테스트는 생성·조회·변경과 HTTP 오류 상태, Catalog 장애 상황까지 확인합니다.
+저장소 테스트는 같은 키의 동시 생성, 내용 충돌, 항목 저장 실패 시 rollback, true/false 반복 변경을 확인합니다. 전체 API 테스트는 HTTP로 자료를 등록한 뒤 목록 생성·조회·변경과 HTTP 오류 상태, Catalog 장애 상황까지 확인합니다.
 
 전체 API 테스트는 테스트 프로세스 안에서 세 서버를 실제 TCP 임시 포트로 실행합니다. 이미 실행 중인 8080/9001/9002 서버를 빌려 쓰지 않습니다. 끝나면 서버를 종료하고 테스트가 만든 키의 DB 행만 정리합니다.
 
-MYSQL_TEST_DSN이 없으면 이 두 테스트는 skip합니다. make test-db는 로컬 학습 DB의 DSN을 설정합니다. 따라서 make test가 통과했다는 사실만으로 실제 MySQL 테스트까지 실행됐다고 판단하면 안 됩니다.
+MYSQL_TEST_DSN이 없으면 실제 DB 테스트들은 skip합니다. make test-db는 로컬 학습 DB의 DSN을 설정합니다. 따라서 make test가 통과했다는 사실만으로 실제 MySQL 테스트까지 실행됐다고 판단하면 안 됩니다.
+
+서버에 기본 자료가 없어도 테스트는 독립적으로 동작합니다. `_test.go`에 있는 작은 입력과 대역 응답은 검증용 fixture입니다. 실행 서버에 주입되는 샘플 데이터가 아니며 테스트가 만든 행만 정리합니다. 수동 실습 입력은 [requests/school.http](../requests/school.http)에 있습니다.
 
 ## 6. 동시성 테스트는 시간만 비교하지 않아요
 

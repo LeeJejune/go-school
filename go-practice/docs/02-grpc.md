@@ -4,24 +4,24 @@
 
 ## 1. Spring의 URL 매핑부터 연결해 봐요
 
-Spring에서는 @PostMapping("/v1/lists")가 붙은 메서드를 찾았을 것입니다. 여기서는 [api/http.yaml](../api/http.yaml)에 연결 관계를 적습니다.
+Spring의 @PostMapping에 해당하는 위치는 [controller/http/router.go](../internal/controller/http/router.go)입니다.
 
-```yaml
-- selector: school.v1.ReadingService.CreateList
-  post: /v1/lists
-  body: "*"
+```go
+v1.POST("/lists", h.CreateList)
 ```
 
-'POST /v1/lists의 JSON 본문을 받아 ReadingService의 CreateList RPC를 호출한다'고 읽습니다. 실제 파일에는 이 내용이 rules 아래에 있습니다.
+`v1`은 `/v1` 그룹입니다. 실제 처리는 [HTTP Controller](../internal/controller/http/reading.go)가 담당합니다. Gin이 JSON을 [HTTP DTO](../internal/controller/http/dto.go)에 바인딩하고, Controller가 gRPC 요청을 만들어 전달합니다.
 
 | HTTP 요청 | 호출 대상 |
 | --- | --- |
-| GET /v1/resources | Catalog의 ListResources |
-| POST /v1/lists | Reading의 CreateList |
-| GET /v1/lists/{id} | Reading의 GetList |
-| PATCH /v1/lists/{list_id}/items/{resource_id} | Reading의 SetRead |
+| PUT /v1/resources/{id} | Catalog.UpsertResource |
+| GET /v1/resources | Catalog.ListResources |
+| POST /v1/lists | Reading.CreateList |
+| GET /v1/lists/{id} | Reading.GetList |
+| PATCH /v1/lists/{id}/items/{resourceID} | Reading.SetRead |
+| GET /v1/dashboard/{id} | Catalog.ListResources + Reading.GetList |
 
-매핑을 적는 것만으로 업무 코드가 구현되지는 않습니다. 생성된 연결 코드와 직접 작성한 요청 처리 메서드가 함께 동작합니다.
+HTTP 라우팅과 JSON DTO는 직접 작성합니다. `.proto`는 서버 간 RPC 계약을 정의하고, HTTP 라우팅 코드를 생성하지 않습니다.
 
 ## 2. gRPC도 서버 간 요청·응답이에요
 
@@ -67,13 +67,13 @@ README의 POST 요청을 실행하면 다음 순서로 진행됩니다.
 
 1. Gateway가 HTTP JSON을 요청 DTO로 읽습니다.
 2. Gateway가 생성된 gRPC 클라이언트로 Reading을 호출합니다.
-3. [service.Reading.CreateList](../internal/service/reading.go)가 업무 입력 타입으로 바꿉니다.
+3. [gRPC Reading.CreateList](../internal/controller/grpc/reading.go)가 업무 입력 타입으로 바꿉니다.
 4. [UseCase.Create](../internal/reading/usecase.go)가 제목과 자료 ID를 검사합니다.
 5. [catalogclient.Client](../internal/catalogclient/client.go)가 Catalog에 자료 제목과 URL을 요청합니다.
 6. Catalog 응답이 성공하면 Repository가 DB에 저장합니다.
 7. 저장 결과가 응답 DTO를 거쳐 JSON으로 반환됩니다.
 
-Gateway의 [server/http.go](../internal/server/http.go)에서는 RegisterReadingServiceHandlerClient에 실제 RPC 클라이언트를 전달합니다. HTTP 핸들러가 Reading의 업무 메서드를 같은 프로세스에서 직접 실행하는 구조는 아닙니다.
+[HTTP Controller](../internal/controller/http/reading.go)의 `h.clients.Reading.CreateList(...)`가 실제 네트워크 호출입니다. `c.Request.Context()`를 RPC에 전달합니다. [server/http.go](../internal/server/http.go)는 Gin을 표준 http.Server에 연결하고 수신 주소와 시작·종료를 관리합니다.
 
 Catalog 조회는 자료별로 여러 번 호출하지 않고 BatchGetResources로 한 번에 요청합니다. 기존 목록의 조회와 읽음 상태 변경은 저장된 정보를 사용하므로 Catalog를 다시 조회하지 않습니다.
 
@@ -87,7 +87,7 @@ Catalog 조회는 자료별로 여러 번 호출하지 않고 BatchGetResources�
 
 ## 6. Go 오류가 HTTP 상태로 바뀌는 곳
 
-Spring의 예외 처리기처럼 [service/reading.go의 rpcError](../internal/service/reading.go)가 업무 오류를 외부 응답으로 바꿉니다.
+Spring의 예외 처리기처럼 [gRPC Controller의 rpcError](../internal/controller/grpc/reading.go)가 업무 오류를 외부 응답으로 바꿉니다.
 
 | 상황 | gRPC 코드 | HTTP 상태 |
 | --- | --- | --- |
@@ -98,13 +98,13 @@ Spring의 예외 처리기처럼 [service/reading.go의 rpcError](../internal/se
 | 전체 요청 제한 시간 초과 | DeadlineExceeded | 504 |
 | 예상하지 못한 저장 오류 | Internal | 500 |
 
-내부 SQL 오류는 로그에 남기고 일반 오류로 응답합니다. Catalog의 짧은 조회 제한 초과는 의존성 조회 실패로 처리해 503이 될 수 있습니다. 모든 시간 초과가 무조건 504인 것은 아닙니다.
+gRPC 상태는 [HTTP error.go](../internal/controller/http/error.go)에서 HTTP 상태로 바뀝니다. 내부 SQL 오류와 panic은 로그에 남기고 일반 오류로 응답합니다. Catalog의 짧은 조회 제한 초과는 의존성 조회 실패로 처리해 503이 될 수 있습니다. 모든 시간 초과가 무조건 504인 것은 아닙니다.
 
 SetRead는 지정한 bool 값으로 상태를 맞추는 명령입니다. isRead를 생략하면 이 계약에서는 false로 해석되므로 PATCH라는 이름만 보고 '생략한 필드는 유지된다'고 생각하지 마세요.
 
 ## 7. 직접 goroutine을 쓰는 서버 기능도 있어요
 
-GET /v1/dashboard/{id}는 자료 카탈로그와 기존 목록을 함께 보여 주는 조합 API입니다. 이 HTTP 경로는 [dashboard.Register](../internal/gateway/dashboard.go)에서 별도로 등록합니다.
+GET /v1/dashboard/{id}는 자료 카탈로그와 기존 목록을 함께 보여 주는 조합 API입니다. 이 경로도 같은 [Gin 라우터](../internal/controller/http/router.go)에 등록하며, 응답 조합은 [Dashboard.Get](../internal/gateway/dashboard.go)에 둡니다.
 
 ```mermaid
 flowchart LR
@@ -121,14 +121,32 @@ flowchart LR
 
 HTTP/gRPC 서버 라이브러리는 여러 요청을 이미 동시에 처리합니다. Controller 역할의 메서드에 매번 go를 붙일 필요는 없습니다. 개발자가 직접 나누는 경우는 이 대시보드처럼 한 요청 안의 독립 작업을 함께 진행할 때입니다.
 
+## 8. 동기 I/O와 goroutine을 구분하세요
+
+`result, err := client.GetList(ctx, req)`나 GORM 조회는 **호출한 goroutine에서 결과를 기다리는 형태**입니다. Java의 일반 메서드 호출처럼 위에서 아래로 읽습니다. 이것이 서버 전체를 한 번에 한 요청만 처리한다는 뜻은 아닙니다.
+
+Go 런타임은 지원하는 네트워크 I/O를 netpoller와 스케줄러로 처리합니다. 네트워크를 기다리는 goroutine이 실행을 양보하면 다른 goroutine이 일할 수 있습니다. 모든 파일·드라이버 작업이 같은 방식인 것은 아니며, goroutine 개수와 OS 스레드 개수도 같지 않습니다.
+
+동시에 시작할 필요가 있으면 `go` 또는 errgroup을 사용합니다. 비동기 HTTP 클라이언트나 Promise가 있어야만 동시 요청을 만들 수 있는 구조는 아닙니다. 그래도 DB 연결 풀, 상대 서버 처리량, CPU에는 한계가 있으므로 무제한 goroutine을 만들지 않습니다.
+
+실제 서버에서 직접 goroutine을 쓰는 예는 다음과 같습니다.
+
+| 용도 | 이 저장소 / 확장 방향 |
+| --- | --- |
+| 한 요청 안에서 독립 RPC 동시 조회 | Dashboard.Get의 errgroup |
+| 서버 실행과 종료 신호 처리 | server/lifecycle.go의 장기 실행 goroutine |
+| 배치·메시지 소비·캐시 갱신 | 앱 수명의 Context와 동시성 상한을 둔 worker로 확장 |
+
+응답 뒤에도 반드시 처리돼야 할 이메일·결제 후속 작업을 Controller에서 `go func()`만으로 시작하면, 프로세스 종료 시 유실될 수 있습니다. 이런 작업은 큐·outbox 등 지속성을 가진 실행 방식을 설계합니다. 현재 실습에는 그런 백그라운드 업무를 임의로 추가하지 않았습니다.
+
 ## 확인 문제
 
 1. POST /v1/lists가 어떤 RPC를 호출하는지 어디서 찾나요?
 2. Gateway에서 DB INSERT가 보이지 않는 이유는 무엇인가요?
 3. 목록 생성과 대시보드는 어떤 이유로 처리 순서가 다른가요?
 
-답: api/http.yaml에서 매핑을 찾습니다. 저장 책임은 Reading에 있습니다. 생성은 앞 조회 결과가 필요하고, 대시보드의 두 조회는 독립적입니다.
+답: controller/http/router.go에서 매핑을 찾습니다. 저장 책임은 Reading에 있습니다. 생성은 앞 조회 결과가 필요하고, 대시보드의 두 조회는 독립적입니다.
 
 [이전: Spring 역할 대응](01-spring-to-go.md) · [다음: GORM과 DB](03-database.md)
 
-더 읽기: [gRPC 소개](https://grpc.io/docs/what-is-grpc/introduction/), [errgroup 문서](https://pkg.go.dev/golang.org/x/sync/errgroup).
+더 읽기: [Go 런타임의 netpoller](https://go.dev/src/runtime/netpoll.go), [gRPC 소개](https://grpc.io/docs/what-is-grpc/introduction/), [errgroup 문서](https://pkg.go.dev/golang.org/x/sync/errgroup).
